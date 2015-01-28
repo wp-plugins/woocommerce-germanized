@@ -1,6 +1,6 @@
 <?php
 /**
- * Adds payment method fee to applicable payment methods
+ * Adds payment method fee to WC_Payment_Gateway
  *
  * @class 		WC_GZD_Payment_Gateway
  * @version		1.0.0
@@ -9,6 +9,7 @@
 class WC_GZD_Payment_Gateway {
 
 	public $gateway;
+	public $extra_fields = array();
 
 	public function __construct( WC_Payment_Gateway $gateway ) {
 		$this->gateway = $gateway;
@@ -17,6 +18,9 @@ class WC_GZD_Payment_Gateway {
 			add_filter( 'woocommerce_gateway_title', array( $this, 'manipulate_title' ), 0, 2 );
 			$this->description .= ' ' . sprintf( __( 'Plus %s payment charge.', 'woocommerce-germanized' ), wc_price( $this->get_option( 'fee' ) ) );
 		}
+		add_action( 'woocommerce_update_options_payment_gateways_' . $this->id, array( $this->gateway, 'process_admin_options' ), PHP_INT_MAX );
+		if ( ! isset( $this->gateway->force_order_button_text ) || ! $this->gateway->force_order_button_text )
+			$this->gateway->order_button_text = __( get_option( 'woocommerce_gzd_order_submit_btn_text' ), 'woocommerce-germanized' );
 	}
 
 	public function __get( $key ) {
@@ -36,19 +40,21 @@ class WC_GZD_Payment_Gateway {
 	 * Add default form fields to enable fee within payment method settings page
 	 */
 	public function init_form_fields() {
-		$this->gateway->form_fields[ 'fee' ] = array(
+		$this->extra_fields[ 'fee' ] = array(
 			'title'       => __( 'Fee', 'woocommerce-germanized' ),
 			'type'        => 'decimal',
 			'description' => __( 'This fee is being added if customer selects payment method within checkout.', 'woocommerce-germanized' ),
 			'default'     => 0,
 			'desc_tip'    => true,
 		);
-		$this->gateway->form_fields[ 'fee_is_taxable' ] = array(
+		$this->extra_fields[ 'fee_is_taxable' ] = array(
 			'title'       => __( 'Fee is taxable?', 'woocommerce-germanized' ),
 			'type'        => 'checkbox',
 			'label' 	  => __( 'Check if fee is taxable.', 'woocommerce-germanized' ),
 			'default'     => 'no',
 		);
+		foreach( $this->extra_fields as $key => $field )
+			$this->gateway->form_fields[ $key ] = $field;
 	}
 
 	/**
