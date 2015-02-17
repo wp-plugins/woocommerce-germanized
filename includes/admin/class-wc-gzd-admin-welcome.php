@@ -117,8 +117,13 @@ class WC_GZD_Admin_Welcome {
 		<p class="woocommerce-actions wc-gzd-actions">
 			<a href="<?php echo admin_url('admin.php?page=wc-settings&tab=germanized'); ?>" class="button button-primary">Einstellungen</a>
 			<a class="vendidero button button-primary" href="<?php echo esc_url( 'http://vendidero.de/support', 'woocommerce-germanized' ); ?>">Hilfe & Support</a>
-			<a href="https://twitter.com/share" class="twitter-share-button" data-url="http://vendidero.de/woocommerce-germanized" data-text="WooCommerce Germanized passt deinen Online-Shop an deutsche Rechtsgrundlagen an. Wir helfen Dir Abmahnungen zu verhindern. Kostenlos!" data-via="Vendidero" data-size="large" data-hashtags="WooCommerce Germanized">Tweet</a>
-			<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+			<span class="wc-gzd-twitter">
+				<a href="https://twitter.com/share" class="twitter-share-button" data-url="http://vendidero.de/woocommerce-germanized" data-text="WooCommerce Germanized passt deinen Online-Shop an deutsche Rechtsgrundlagen an. Wir helfen Dir Abmahnungen zu verhindern. Kostenlos!" data-via="Vendidero" data-size="large" data-hashtags="WooCommerce Germanized">Tweet</a>
+				<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
+			</span>
+			<span class="wc-gzd-fb">
+			<iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Fvendidero.de%2Fwoocommerce-germanized&amp;width&amp;layout=button&amp;action=recommend&amp;show_faces=false&amp;share=false&amp;height=20" scrolling="no" frameborder="0" style="border:none; overflow:hidden; height:20px;" allowTransparency="true"></iframe>
+			</span>
 		</p>
 		<div class="changelog vendipro">
 			<h3>VendiPro - Das WooCommerce Theme für den deutschen Markt</h3>
@@ -156,6 +161,13 @@ class WC_GZD_Admin_Welcome {
 			<h3>Neu in WooCommerce Germanized 1.2</h3>
 			<div class="wc-feature feature-section col three-col" style="margin-bottom: -30px">
 				<div>
+					<h4><i class="fa fa-envelope"></i> Double Opt-In</h4>
+					<p>
+					Von nun an kannst du optional das Double Opt-In Verfahren für Benutzerkonten aktivieren.
+					Dazu gab es vor kurzem ein Urteil des Amtsgericht Berlin Pankow/Weißensee. Mehr dazu <a href="http://t3n.de/news/urteil-anmeldebestatigungen-double-opt-in-pflicht-592304/" target="_blank">hier</a>.
+					</p>
+				</div>
+				<div>
 					<h4><i class="fa fa-truck"></i> Steuern für Versandkosten</h4>
 					<p>
 					Die Besteuerung von Versandkosten und Gebühren ist in Deutschland ziemlich kompliziert. 
@@ -163,18 +175,11 @@ class WC_GZD_Admin_Welcome {
 					für Versandkosten und Gebühren basierend auf den MwSt.-Anteilen im Warenkorb. Hier findest du mehr <a href="http://www.it-recht-kanzlei.de/umsatzsteuer-versandkosten-mehrwertsteuer.html" target="_blank">Informationen</a>.
 					</p>
 				</div>
-				<div>
+				<div class="last-feature">
 					<h4><i class="fa fa-hand-o-up"></i> WC 2.3 - Kompatibilität</h4>
 					<p>
 					Mit dieser Version unterstützt WC Germanized auch die neueste WooCommerce Version (2.3), die in Kürze erscheint.
 					WC Germanized bleibt aber vorerst auch rückwärtskompatibel und unterstützt weiterhin 2.2.
-					</p>
-				</div>
-				<div class="last-feature">
-					<h4><i class="fa fa-check"></i> Plugin Kompatibilität</h4>
-					<p>
-					Mit dieser Version unterstützen wir noch besser Plugins von Drittanbietern. Templates von WooCommerce Germanized
-					können nun in einem Theme-Ordner überschrieben werden (mein-theme/woocommerce-germanized).
 					</p>
 				</div>
 			</div>
