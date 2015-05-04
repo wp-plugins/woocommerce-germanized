@@ -36,8 +36,8 @@ class WC_GZD_Emails {
 		remove_action( 'woocommerce_email_footer', array( WC()->mailer(), 'email_footer' ) );
 		add_action( 'woocommerce_email_footer', array( $this, 'add_template_footers' ), 0 );
 		add_action( 'woocommerce_email_footer', array( WC()->mailer(), 'email_footer' ), 1 );
-		
-		add_action( 'woocommerce_order_item_name', array( $this, 'order_item_desc' ), 0, 2 );
+
+		add_filter( 'woocommerce_email_styles', array( $this, 'styles' ) );
 
 		$mails = WC()->mailer()->get_emails();
 
@@ -46,6 +46,33 @@ class WC_GZD_Emails {
 				add_action( 'woocommerce_germanized_email_footer_' . $mail->id, array( $this, 'hook_mail_footer' ), 10, 1 );
 			}
 		}
+
+		add_filter( 'woocommerce_order_item_product', array( $this, 'set_order_email_filters' ), 0, 1 );
+	}
+
+	public function set_order_email_filters( $product ) {
+		if ( is_wc_endpoint_url( 'order-received' ) )
+			return $product;
+		// Add order item name actions
+		add_action( 'woocommerce_order_item_name', 'wc_gzd_cart_product_delivery_time', 0, 2 );
+		add_action( 'woocommerce_order_item_name', 'wc_gzd_cart_product_item_desc', 0, 2 );
+		add_filter( 'woocommerce_order_formatted_line_subtotal', 'wc_gzd_cart_product_unit_price', 0, 2 );
+		return $product;
+	}
+
+	/**
+	 * Add email styles
+	 *  
+	 * @param  string $css 
+	 * @return string      
+	 */
+	public function styles( $css ) {
+		return $css .= '
+			.unit-price-cart {
+				display: block;
+				font-size: 0.9em;
+			}
+		';
 	}
 
 	/**
@@ -75,18 +102,6 @@ class WC_GZD_Emails {
 	}
 
 	/**
-	 * Adds product description to order item if available
-	 *  
-	 * @param  string $item_name product name
-	 * @param  array $item     
-	 * @return string the item name containing product description if available
-	 */
-	public function order_item_desc( $item_name, $item ) {
-		if ( isset( $item[ 'product_desc' ] ) )
-			$item_name .= '<div class="wc-gzd-item-desc item-desc">' . $item[ 'product_desc' ] . '</div>';
-		return $item_name;
-	}
-	/**
 	 * Hook into Email Footer and attach legal page content if necessary
 	 *  
 	 * @param  object $mail
@@ -107,7 +122,7 @@ class WC_GZD_Emails {
 	 * Add global footer Hooks to Email templates
 	 */
 	public function add_template_footers() {
-		$type = ( ! empty( $GLOBALS['template_name'] ) ) ? $this->get_email_instance_by_tpl( $GLOBALS['template_name'] ) : '';
+		$type = ( ! empty( $GLOBALS[ 'wc_gzd_template_name' ] ) ) ? $this->get_email_instance_by_tpl( $GLOBALS[ 'wc_gzd_template_name' ] ) : '';
 		if ( ! empty( $type ) )
 			do_action( 'woocommerce_germanized_email_footer_' . $type->id, $type );
 	}

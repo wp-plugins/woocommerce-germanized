@@ -47,6 +47,11 @@
 	display: inline;
 	width: auto;
 }
+.unit-price-cart {
+	font-size: 0.9em;
+	display: block;
+	margin-top: 5px;
+}
 .products .wc-gzd-additional-info {
 	font-size: 0.8em;
 	margin: 0.7rem 0 0.7rem 0;
@@ -73,15 +78,17 @@ p.footer-info {
 	display: inline-block;
 	background: transparent url(../images/trusted-shops-badge.png) no-repeat;
 }
-.order_details li:first-child {
-	padding-left: 0;
-	margin-left: 0;
-}
-.woocommerce dl.customer_details {
-	margin-left: 0;
-}
 .wc-gzd-item-desc p {
 	font-size: 0.9em;
+}
+.wc-gzd-edit-data-notice {
+	background: #EEE;
+	display: inline-block;
+	padding: 1em;
+}
+.wc-gzd-edit-data-notice p.wc-gzd-info {
+	margin: 0;
+	padding: 0;
 }
 table.product-details-inner {
 	table-layout:fixed;
@@ -106,6 +113,13 @@ table.product-details-inner tr td:last-child {
 	display: inline-block;
 	float: none;
 	margin-left: 0.5rem;
+}
+.wc-gzd-product-name-left, .wc-gzd-product-name-right {
+	float: left;
+}
+.wc-gzd-product-name-left {
+	max-width: 15%;
+	margin-right: 1em;
 }
 #eKomiSeal_default img {
 	width: 100% !important;

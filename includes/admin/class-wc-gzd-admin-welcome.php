@@ -68,9 +68,11 @@ class WC_GZD_Admin_Welcome {
 	 * @return void
 	 */
 	public function admin_css() {
+		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+
 		wp_enqueue_style( 'fontawesome', plugins_url(  '/assets/css/font-awesome.min.css', WC_GERMANIZED_PLUGIN_FILE ), array(), '4.2.0' );
 		wp_enqueue_style( 'woocommerce-activation', plugins_url(  '/assets/css/activation.css', WC_PLUGIN_FILE ), array(), WC_VERSION );
-		wp_enqueue_style( 'woocommerce-gzd-activation', plugins_url(  '/assets/css/woocommerce-gzd-activation.css', WC_GERMANIZED_PLUGIN_FILE ), array(), WC_GERMANIZED_VERSION );
+		wp_enqueue_style( 'woocommerce-gzd-activation', plugins_url(  '/assets/css/woocommerce-gzd-activation' . $suffix . '.css', WC_GERMANIZED_PLUGIN_FILE ), array(), WC_GERMANIZED_VERSION );
 	}
 
 	/**
@@ -101,7 +103,7 @@ class WC_GZD_Admin_Welcome {
 		$major_version = substr( WC_germanized()->version, 0, 3 );
 		?>
 		<h1>Willkommen bei WooCommerce Germanized</h1>
-		<a class="wc-gzd-logo" href="" target="_blank" style="margin-right: 1em"></a>
+		<a class="wc-gzd-logo" href="https://vendidero.de/woocommerce-germanized" target="_blank" style="margin-right: 1em"></a>
 		<div class="about-text woocommerce-about-text">
 			<?php
 				if ( ! empty( $_GET['wc-gzd-installed'] ) )
@@ -116,11 +118,7 @@ class WC_GZD_Admin_Welcome {
 		</div>
 		<p class="woocommerce-actions wc-gzd-actions">
 			<a href="<?php echo admin_url('admin.php?page=wc-settings&tab=germanized'); ?>" class="button button-primary">Einstellungen</a>
-			<a class="vendidero button button-primary" href="<?php echo esc_url( 'http://vendidero.de/support', 'woocommerce-germanized' ); ?>">Hilfe & Support</a>
-			<span class="wc-gzd-twitter">
-				<a href="https://twitter.com/share" class="twitter-share-button" data-url="http://vendidero.de/woocommerce-germanized" data-text="WooCommerce Germanized passt deinen Online-Shop an deutsche Rechtsgrundlagen an. Wir helfen Dir Abmahnungen zu verhindern. Kostenlos!" data-via="Vendidero" data-size="large" data-hashtags="WooCommerce Germanized">Tweet</a>
-				<script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src="//platform.twitter.com/widgets.js";fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");</script>
-			</span>
+			<a href="https://vendidero.de/woocommerce-germanized#buy" target="_blank" class="button button-primary">Upgrade zur Pro Version</a>
 			<span class="wc-gzd-fb">
 			<iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Fvendidero.de%2Fwoocommerce-germanized&amp;width&amp;layout=button&amp;action=recommend&amp;show_faces=false&amp;share=false&amp;height=20" scrolling="no" frameborder="0" style="border:none; overflow:hidden; height:20px;" allowTransparency="true"></iframe>
 			</span>
@@ -128,11 +126,11 @@ class WC_GZD_Admin_Welcome {
 		<div class="changelog vendipro">
 			<h3>VendiPro - Das WooCommerce Theme für den deutschen Markt</h3>
 			<div class="left">
-				<a href="http://vendidero.de/vendipro" target="_blank"><img src="<?php echo WC_germanized()->plugin_url();?>/assets/images/vendidero.jpg" /></a>
+				<a href="https://vendidero.de/vendipro" target="_blank"><img src="<?php echo WC_germanized()->plugin_url();?>/assets/images/vendidero.jpg" /></a>
 			</div>
 			<div class="right">
 				<p>Endlich ist es soweit - Ein WooCommerce Theme, perfekt auf den deutschen Markt abgestimmt.
-				Mit <a href="http://vendidero.de/vendipro" target="_blank">VendiPro</a> wirken alle WooCommerce & WooCommerce Germanized Inhalte einfach noch professioneller.</p>
+				Mit <a href="https://vendidero.de/vendipro" target="_blank">VendiPro</a> wirken alle WooCommerce & WooCommerce Germanized Inhalte einfach noch professioneller.</p>
 				<div class="wc-feature wc-vendipro-features feature-section col two-col">
 					<div>
 						<h4><i class="fa fa-mobile"></i> Responsive Layout</h4>
@@ -152,34 +150,54 @@ class WC_GZD_Admin_Welcome {
 					</div>
 				</div>
 				<div class="vendipro-buttons">
-					<a href="http://vendidero.de/vendipro" target="_blank" class="button button-primary wc-gzd-button">mehr erfahren</a>
+					<a href="https://vendidero.de/vendipro" target="_blank" class="button button-primary wc-gzd-button">mehr erfahren</a>
 					<p class="price smaller">ab 49,95 € inkl. Mwst. - inkl. 1 Jahr Updates & Premium Support!</p>
 				</div>
 			</div>
 		</div>
 		<div class="changelog">
-			<h3>Neu in WooCommerce Germanized 1.2</h3>
+			<h3>Neu in WooCommerce Germanized 1.3</h3>
 			<div class="wc-feature feature-section col three-col" style="margin-bottom: -30px">
 				<div>
-					<h4><i class="fa fa-envelope"></i> Double Opt-In</h4>
+					<h4><i class="fa fa-file-pdf-o"></i> PDF Rechnungen <a class="wc-gzd-pro" target="_blank" href="https://vendidero.de/woocommerce-germanized#accounting">Pro</a></h4>
 					<p>
-					Von nun an kannst du optional das Double Opt-In Verfahren für Benutzerkonten aktivieren.
-					Dazu gab es vor kurzem ein Urteil des Amtsgericht Berlin Pankow/Weißensee. Mehr dazu <a href="http://t3n.de/news/urteil-anmeldebestatigungen-double-opt-in-pflicht-592304/" target="_blank">hier</a>.
+					Als glücklicker Pro-User kannst du mit wenigen Klicks PDF Rechnungen und Stornierungen zu deinen Bestellungen erzeugen.
+					Natürlich wurden auch die Rechnungen optimal an die Bedürfnisse des deutschen Marktes angepasst.
 					</p>
 				</div>
 				<div>
-					<h4><i class="fa fa-truck"></i> Steuern für Versandkosten</h4>
+					<h4><i class="fa fa-file-text-o"></i> Mustertexte API <a class="wc-gzd-pro" target="_blank" href="https://vendidero.de/woocommerce-germanized#generator">Pro</a></h4>
 					<p>
-					Die Besteuerung von Versandkosten und Gebühren ist in Deutschland ziemlich kompliziert. 
-					Auf Wunsch passt WooCommerce Germanized die Besteuerung nun automatisiert an und berechnet die Steuern
-					für Versandkosten und Gebühren basierend auf den MwSt.-Anteilen im Warenkorb. Hier findest du mehr <a href="http://www.it-recht-kanzlei.de/umsatzsteuer-versandkosten-mehrwertsteuer.html" target="_blank">Informationen</a>.
+					Generiere über die Schnittstelle zu vendidero.de in deinem Backend einfach wichtige Mustertexte für AGB & Widerrufsbelehrung.
+					Fülle einfach den Fragebogen aus und erhalte einen Mustertext, den du mit einem Klick in die entsprechende Seite übernehmen kannst.
 					</p>
 				</div>
 				<div class="last-feature">
-					<h4><i class="fa fa-hand-o-up"></i> WC 2.3 - Kompatibilität</h4>
+					<h4><i class="fa fa-clock-o"></i> Vertragsschluss <a class="wc-gzd-pro" target="_blank" href="https://vendidero.de/woocommerce-germanized#contract">Pro</a></h4>
 					<p>
-					Mit dieser Version unterstützt WC Germanized auch die neueste WooCommerce Version (2.3), die in Kürze erscheint.
-					WC Germanized bleibt aber vorerst auch rückwärtskompatibel und unterstützt weiterhin 2.2.
+					Du möchtest den Zeitpunkt des Vertragsschlusses aktiv bestimmen und deine Bestellungen manuell prüfen?
+					Alle Zahlungsinformationen werden erst dann an den Kunden ausgegeben, wenn du die Bestellung annimmst. 
+					</p>
+				</div>
+				<div>
+					<h4><i class="fa fa-thumbs-up"></i> Theme Kompatibilität</h4>
+					<p>
+					Falls du WooCommerce > 2.3 nutzst, überschreibt WooCommerce Germanized von nun an keine Templates mehr. 
+					Damit sollte es mit deinem Theme keine Probleme mehr während des Bezahlvorganges geben.
+					</p>
+				</div>
+				<div>
+					<h4><i class="fa fa-arrows-h"></i> Einheiten anlegen</h4>
+					<p>
+					Du verkaufst basierend auf Einheitspreisen? Dann möchtest du vielleicht neue Einheiten (z.B. "Stück") hinzufügen.
+					Alles kein Problem mehr mit dem <a href="<?php echo admin_url('edit-tags.php?taxonomy=product_unit&post_type=product'); ?>">Einheiten-Editor</a>. Füge neue Einheiten hinzu oder passe die Bezeichnung an.
+					</p>
+				</div>
+				<div class="last-feature">
+					<h4><i class="fa fa-language"></i> WPML Kompatibilität</h4>
+					<p>
+					Einige von euch betreiben Multi-Sprachen-Shops. Um auch die Optionen (Kaufen-Button-Text etc.) von WooCommerce Germanized übersetzen zu können, haben wir 
+					eine wpml-confix.xml Datei angelegt, die euch dabei hilft die Strings zu übersetzen.
 					</p>
 				</div>
 			</div>

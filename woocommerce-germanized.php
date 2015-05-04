@@ -1,13 +1,13 @@
 <?php
 /**
  * Plugin Name: WooCommerce Germanized
- * Plugin URI: http://www.vendidero.de/woocommerce-germanized
+ * Plugin URI: https://www.vendidero.de/woocommerce-germanized
  * Description: Extends WooCommerce to become a legally compliant store for the german market.
- * Version: 1.2.3
+ * Version: 1.3.0
  * Author: Vendidero
- * Author URI: http://vendidero.de
+ * Author URI: https://vendidero.de
  * Requires at least: 3.8
- * Tested up to: 4.1
+ * Tested up to: 4.2
  *
  * Text Domain: woocommerce-germanized
  * Domain Path: /i18n/languages/
@@ -26,7 +26,7 @@ final class WooCommerce_Germanized {
 	 *
 	 * @var string
 	 */
-	public $version = '1.2.3';
+	public $version = '1.3.0';
 
 	/**
 	 * Single instance of WooCommerce Germanized Main Class
@@ -111,10 +111,10 @@ final class WooCommerce_Germanized {
 			spl_autoload_register( "__autoload" );
 		spl_autoload_register( array( $this, 'autoload' ) );
 
-		if ( ! $this->is_woocommerce_activated() ) {
-			add_action( 'admin_init', array( $this, 'deactivate' ), 0 );
-			return;
-		}
+		// Check if dependecies are installed
+		$init = WC_GZD_Dependencies::instance();
+		if ( ! $init->is_loadable() )
+			return; 
 
 		// Define constants
 		$this->define_constants();
@@ -129,7 +129,6 @@ final class WooCommerce_Germanized {
 		add_action( 'widgets_init', array( $this, 'include_widgets' ), 25 );
 		add_action( 'plugins_loaded', array( $this, 'load_plugin_textdomain' ) );
 		add_action( 'woocommerce_init', array( $this, 'replace_woocommerce_cart' ), 0 );
-		add_action( 'woocommerce_init', array( $this, 'replace_woocommerce_payment_gateways' ), 0 );
 		add_action( 'woocommerce_init', array( $this, 'replace_woocommerce_product_factory' ), PHP_INT_MAX );
 
 		// Loaded action
@@ -137,24 +136,13 @@ final class WooCommerce_Germanized {
 
 	}
 
-	public function deactivate() {
-		if ( current_user_can( 'activate_plugins' ) )
-			deactivate_plugins( plugin_basename( __FILE__ ) );
-	}
-
 	/**
-	 * Checks if WooCommerce is activated
+	 * Checks if is pro user
 	 *  
-	 * @return boolean true if WooCommerce is activated
+	 * @return boolean
 	 */
-	public function is_woocommerce_activated() {
-		if ( is_multisite() )
-			require_once( ABSPATH . '/wp-admin/includes/plugin.php' );
-		if ( is_multisite() && ! ( is_plugin_active_for_network( 'woocommerce/woocommerce.php' ) || in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) )
-			return false;
-		if ( ! is_multisite() && ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) )
-			return false;
-		return true;
+	public function is_pro() {
+		return WC_GZD_Dependencies::instance()->is_plugin_activated( 'woocommerce-germanized-pro/woocommerce-germanized-pro.php' );
 	}
 
 	/**
@@ -165,14 +153,19 @@ final class WooCommerce_Germanized {
 		do_action( 'before_woocommerce_germanized_init' );
 
 		add_filter( 'woocommerce_locate_template', array( $this, 'filter_templates' ), PHP_INT_MAX, 3 );
-		if ( version_compare( WC()->version, '2.3', '<' ) )
+		
+		if ( version_compare( WC()->version, '2.3', '<' ) ) {
 			add_filter( 'woocommerce_gzd_default_plugin_template', array( $this, 'filter_templates_old_version' ), 0, 2 );
-		add_filter( 'woocommerce_product_class', array( $this, 'filter_product_classes' ), PHP_INT_MAX, 4 );
+		} else {
+			add_filter( 'woocommerce_gzd_important_templates', array( $this, 'set_critical_templates_2_3' ) );
+			if ( get_option( 'woocommerce_gzd_display_checkout_fallback' ) == 'yes' )
+				add_filter( 'woocommerce_gzd_template_name', array( $this, 'set_review_order_fallback' ) );
+		}
+		
 		add_filter( 'woocommerce_get_settings_pages', array( $this, 'add_settings' ) );
 		add_filter( 'woocommerce_enqueue_styles', array( $this, 'add_styles' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'add_scripts' ) );
 		add_action( 'wp_enqueue_scripts', array( $this, 'add_inline_styles' ) );
-		add_action( 'admin_enqueue_scripts', array( $this, 'add_admin_styles' ) );
 		add_action( 'wp_print_scripts', array( $this, 'localize_scripts' ), 5 );
 		add_filter( 'woocommerce_email_classes', array( $this, 'add_emails' ) );
 		add_filter( 'woocommerce_locate_core_template', array( $this, 'email_templates' ), 0, 3 );
@@ -180,7 +173,8 @@ final class WooCommerce_Germanized {
 
 		// Add better tax display to order totals
 		add_filter( 'woocommerce_get_order_item_totals', array( $this, 'order_item_totals' ), 0, 2 );
-		add_action( 'woocommerce_cart_calculate_fees', array( $this, 'add_fee_cart' ), 0 );
+		// Unsure wether this could lead to future problems - tax classes with same name wont be merged anylonger
+		//add_filter( 'woocommerce_rate_code', array( $this, 'prevent_tax_name_merge' ), PHP_INT_MAX, 2 );
 		
 		// Adjust virtual Product Price and tax class
 		add_filter( 'woocommerce_get_price_including_tax', array( $this, 'set_virtual_product_price' ), PHP_INT_MAX, 3 );
@@ -202,6 +196,9 @@ final class WooCommerce_Germanized {
 		add_action( 'template_redirect', array( $this, 'customer_account_activation_check' ) );
 		add_action( 'woocommerce_gzd_customer_cleanup', array( WC_GZD_Admin_Customer::instance(), 'account_cleanup' ) );
 
+		// Remove cart subtotal filter
+		add_action( 'template_redirect', array( $this, 'remove_cart_unit_price_filter' ) );
+
 		// Remove processing + on-hold default order confirmation mails
 		$mailer = WC()->mailer();
 		$mails = $mailer->get_emails();
@@ -218,13 +215,6 @@ final class WooCommerce_Germanized {
 
 		// Init action
 		do_action( 'woocommerce_germanized_init' );
-	}
-
-	/**
-	 * Replaces default WC_Payment_Gateways to enable dependency injection
-	 */
-	public function replace_woocommerce_payment_gateways() {
-		WC()->payment_gateways = WC_GZD_Payment_Gateways::instance();
 	}
 
 	/**
@@ -258,9 +248,7 @@ final class WooCommerce_Germanized {
 		$class = strtolower( $class );
 		$file = 'class-' . str_replace( '_', '-', $class ) . '.php';
 
-		if ( strpos( $class, 'wc_gzd_gateway_' ) === 0 )
-			$path = $this->plugin_path() . '/includes/gateways/' . trailingslashit( substr( str_replace( '_', '-', $class ), 15 ) );
-		else if ( strpos( $class, 'wc_gzd_admin_' ) === 0 )
+		if ( strpos( $class, 'wc_gzd_admin_' ) === 0 )
 			$path = $this->plugin_path() . '/includes/admin/';
 
 		if ( version_compare( get_option( 'woocommerce_version' ), '2.3', '<' ) ) {
@@ -344,10 +332,13 @@ final class WooCommerce_Germanized {
 
 		// Post types
 		include_once ( 'includes/class-wc-gzd-post-types.php' );
+		// Gateway manipulation
+		include_once ( 'includes/class-wc-gzd-payment-gateways.php' );
 
 		// Abstracts
 		include_once ( 'includes/abstracts/abstract-wc-gzd-product.php' );
-		include_once ( 'includes/abstracts/abstract-wc-gzd-payment-gateway.php' );
+
+		include_once ( 'includes/class-wc-gzd-wpml-helper.php' );
 
 		include_once ( 'includes/wc-gzd-cart-functions.php' );
 		include_once ( 'includes/class-wc-gzd-checkout.php' );
@@ -387,9 +378,9 @@ final class WooCommerce_Germanized {
 	public function filter_templates( $template, $template_name, $template_path ) {
 		$template_path = $this->template_path();
 
-		if ( empty( $GLOBALS[ 'template_name' ] ) )
-			$GLOBALS['template_name'] = array();
-		$GLOBALS['template_name'][] = $template_name;
+		if ( ! isset( $GLOBALS[ 'wc_gzd_template_name' ] ) || empty( $GLOBALS[ 'wc_gzd_template_name' ] ) || ! is_array( $GLOBALS[ 'wc_gzd_template_name' ] ) )
+			$GLOBALS['wc_gzd_template_name'] = array();
+		$GLOBALS['wc_gzd_template_name'][] = $template_name;
 
 		// Check Theme
 		$theme_template = locate_template(
@@ -398,6 +389,8 @@ final class WooCommerce_Germanized {
 				$template_name
 			)
 		);
+
+		$template_name = apply_filters( 'woocommerce_gzd_template_name', $template_name );
 
 		// Load Default
 		if ( ! $theme_template && file_exists( apply_filters( 'woocommerce_gzd_default_plugin_template', $this->plugin_path() . '/templates/' . $template_name, $template_name ) ) )
@@ -432,6 +425,31 @@ final class WooCommerce_Germanized {
 	}
 
 	/**
+	 * Sets WC 2.3 critical templates (if fallback mode is used don't remove review-order.php)
+	 *  
+	 * @param array $templates
+	 * @return array
+	 */
+	public function set_critical_templates_2_3( $templates ) {
+		$templates = array_diff( $templates, array( 'checkout/form-pay.php' ) );
+		if ( get_option( 'woocommerce_gzd_display_checkout_fallback' ) != 'yes' )
+			$templates = array_diff( $templates, array( 'checkout/review-order.php' ) );
+		return $templates;
+	}
+
+	/**
+	 * Sets review-order.php fallback (if activated) by filtering template name.
+	 *  
+	 * @param string $template_name
+	 * @return string
+	 */
+	public function set_review_order_fallback( $template_name ) {
+		if ( strstr( $template_name, "review-order.php" ) )
+			return 'checkout/review-order-fallback.php';
+		return $template_name;
+	}
+
+	/**
 	 * Inject WC_GZD_Product into WC_Product by filtering postmeta - fallback if not using wc_get_product
 	 *  
 	 * @param  mixed $metadata 
@@ -450,20 +468,8 @@ final class WooCommerce_Germanized {
 	 * Replace the default WC_Cart by WC_GZD_Cart for EU virtual VAT rules.
 	 */
 	public function replace_woocommerce_cart() {
-		if ( get_option( 'woocommerce_gzd_enable_virtual_vat' ) == 'yes' && ( ! is_admin() || defined( 'DOING_AJAX' ) ) )
+		if ( get_option( 'woocommerce_gzd_enable_virtual_vat' ) == 'yes' && ( ! is_admin() || defined( 'DOING_AJAX' ) ) && ! defined( 'DOING_CRON' ) )
 			WC()->cart = new WC_GZD_Cart();
-	}
-
-	/**
-	 * Set default order button text instead of the button text defined by each payment gateway.
-	 * Can be overriden by setting force_order_button_text within payment gateway class
-	 */
-	public function set_order_button_gateway_text() {
-		$gateways = WC()->payment_gateways->get_available_payment_gateways();
-		foreach( $gateways as $gateway ) {
-			if ( ! isset( $gateway->force_order_button_text ) || ! $gateway->force_order_button_text )
-				$gateway->order_button_text = __( get_option( 'woocommerce_gzd_order_submit_btn_text' ), 'woocommerce-germanized' );
-		}
 	}
 
 	/**
@@ -491,15 +497,6 @@ final class WooCommerce_Germanized {
 	public function remove_cart_tax_zero_filter() {
 		if ( get_option( 'woocommerce_gzd_display_hide_cart_tax_estimated' ) == 'yes' )
 			remove_filter( 'woocommerce_get_cart_tax', array( $this, 'set_cart_tax_zero' ) );
-	}
-
-	/**
-	 * Gets payment gateways which are ready to accept fees.
-	 *  
-	 * @return array
-	 */
-	public function get_payment_gateways_feeable() {
-		return apply_filters( 'wc_gzd_payment_gateways_feeable', array( 'bacs', 'paypal', 'cod' ) );
 	}
 
 	/**
@@ -564,25 +561,20 @@ final class WooCommerce_Germanized {
 	}
 
 	/**
-	 * Add custom styles to Admin
-	 */
-	public function add_admin_styles() {
-		wp_register_style( 'woocommerce-gzd-admin', WC_germanized()->plugin_url() . '/assets/css/woocommerce-gzd-admin.css', false, WC_germanized()->version );
-		wp_enqueue_style( 'woocommerce-gzd-admin' );
-	}
-
-	/**
 	 * Add styles to frontend
 	 *
 	 * @param array   $styles
 	 */
 	public function add_styles( $styles ) {
+		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
+		
 		$styles['woocommerce-gzd-layout'] = array(
-			'src'     => str_replace( array( 'http:', 'https:' ), '', WC_germanized()->plugin_url() ) . '/assets/css/woocommerce-gzd-layout.css',
+			'src'     => str_replace( array( 'http:', 'https:' ), '', WC_germanized()->plugin_url() ) . '/assets/css/woocommerce-gzd-layout' . $suffix . '.css',
 			'deps'    => '',
 			'version' => WC_GERMANIZED_VERSION,
 			'media'   => 'all'
 		);
+		
 		return $styles;
 	}
 
@@ -600,18 +592,23 @@ final class WooCommerce_Germanized {
 	 */
 	public function add_scripts() {
 		global $post;
+		
+		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 		$assets_path = str_replace( array( 'http:', 'https:' ), '', WC_germanized()->plugin_url() ) . '/assets/';
 		$frontend_script_path = $assets_path . 'js/';
-		if ( isset( $post ) && $post->ID == woocommerce_get_page_id( 'revocation' ) )
-			wp_enqueue_script( 'wc-gzd-revocation', $frontend_script_path . 'revocation.js', array( 'jquery', 'woocommerce', 'wc-country-select', 'wc-address-i18n' ), WC_GERMANIZED_VERSION, true );
+		
+		if ( is_page() )
+			wp_enqueue_script( 'wc-gzd-revocation', $frontend_script_path . 'revocation' . $suffix . '.js', array( 'jquery', 'woocommerce', 'wc-country-select', 'wc-address-i18n' ), WC_GERMANIZED_VERSION, true );
+		
 		if ( is_checkout() )
-			wp_enqueue_script( 'wc-gzd-checkout', $frontend_script_path . 'checkout.js', array( 'jquery', 'wc-checkout' ), WC_GERMANIZED_VERSION, true );
+			wp_enqueue_script( 'wc-gzd-checkout', $frontend_script_path . 'checkout' . $suffix . '.js', array( 'jquery', 'wc-checkout' ), WC_GERMANIZED_VERSION, true );
+		
 		if ( is_singular( 'product' ) ) {
 			$product = wc_get_product( $post->ID );
 			if ( $product && $product->is_type( 'variable' ) ) {
 				// Enqueue variation scripts
 				wp_enqueue_script( 'wc-add-to-cart-variation' );
-				wp_enqueue_script( 'wc-gzd-add-to-cart-variation', $frontend_script_path . 'add-to-cart-variation.js', array( 'jquery', 'woocommerce' ), WC_GERMANIZED_VERSION, true );
+				wp_enqueue_script( 'wc-gzd-add-to-cart-variation', $frontend_script_path . 'add-to-cart-variation' . $suffix . '.js', array( 'jquery', 'woocommerce' ), WC_GERMANIZED_VERSION, true );
 			}
 		} 
 	}
@@ -769,21 +766,9 @@ final class WooCommerce_Germanized {
 	public function set_virtual_product_price( $price, $qty, $product ) {
 		if ( ! $product->gzd_product->is_virtual_vat_exception() || ! isset( WC()->cart ) || ! WC()->cart->is_virtual_taxable() )
 			return $price;
-		if ( get_option('woocommerce_prices_include_tax') === 'yes' )
+		if ( get_option( 'woocommerce_prices_include_tax' ) === 'yes' )
 			return $product->get_price() * $qty;
 		return $price;
-	}
-
-	/**
-	 * Update fee for cart if feeable gateway has been selected as payment method
-	 */
-	public function add_fee_cart() {
-		$gateways = WC()->payment_gateways()->get_available_payment_gateways();
-		if ( ! ( $key = WC()->session->get('chosen_payment_method') ) || ! isset( $gateways[ $key ] ) )
-			return;
-		$gateway = $gateways[ $key ];
-		if ( isset( $gateway->parent ) && is_callable( array( $gateway->parent, 'add_fee' ) ) )
-			$gateway->parent->add_fee();
 	}
 
 	/**
@@ -794,10 +779,10 @@ final class WooCommerce_Germanized {
 	 * @return array               
 	 */
 	public function order_item_totals( $order_totals, $order ) {
-		$order_totals['order_total'] = array(
-			'label' => __( 'Order Total:', 'woocommerce' ),
-			'value'	=> $order->get_formatted_order_total()
-		);
+
+		// Set to formatted total without displaying tax info behind the price
+		$order_totals['order_total']['value'] = $order->get_formatted_order_total();
+
 		// Tax for inclusive prices
 		if ( 'yes' == get_option( 'woocommerce_calc_taxes' ) && 'incl' == $order->tax_display_cart ) {
 			
@@ -829,6 +814,25 @@ final class WooCommerce_Germanized {
 			}
 		}
 		return $order_totals;
+	}
+
+	/**
+	 * Remove cart unit price subtotal filter
+	 */
+	public function remove_cart_unit_price_filter() {
+		if ( is_cart() )
+			remove_filter( 'woocommerce_cart_item_subtotal', 'wc_gzd_cart_product_unit_price', 0, 2 );
+	}
+
+	/**
+	 * Prevent tax class merging. Could lead to future problems - not yet implemented
+	 *  
+	 * @param  string $code    tax class code
+	 * @param  int $rate_id 
+	 * @return string          unique tax class code
+	 */
+	public function prevent_tax_name_merge( $code, $rate_id ) {
+		return $code . '-' . $rate_id;
 	}
 
 }

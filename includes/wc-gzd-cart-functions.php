@@ -18,17 +18,72 @@ function wc_gzd_get_tax_rate( $tax_rate_id ) {
 	return false; 
 }
 
-function wc_gzd_product_item_desc( $title, $item ) {
-	$new = $title;
-	if ( isset( $item[ 'product_id' ] ) ) {
-		$product_id = ( ! empty( $item[ 'variation_id' ] ) ? $item[ 'variation_id' ] : $item[ 'product_id' ] );
-		$product = wc_get_product( $product_id );
+/**
+ * Appends product item desc live data (while checkout) or order meta to product name
+ *  
+ * @param  string $title    
+ * @param  array $cart_item 
+ * @return string
+ */
+function wc_gzd_cart_product_item_desc( $title, $cart_item ) {
+	$product_desc = "";
+	if ( isset( $cart_item[ 'data' ] ) ) {
+		$product = wc_get_product( $cart_item[ 'data' ] );
 		if ( $product->gzd_product->get_mini_desc() )
-			$new .= '<div class="wc-gzd-item-desc item-desc">' . $product->gzd_product->get_mini_desc() . '</div>';
-	}
-	return $new;
+			$product_desc = $product->gzd_product->get_mini_desc();
+	} else if ( isset( $cart_item[ 'item_desc' ] ) )
+		$product_desc = $cart_item[ 'item_desc' ];
+	if ( ! empty( $product_desc ) )
+		$title .= '<div class="wc-gzd-item-desc item-desc">' . $product_desc . '</div>';
+	return $title;
 }
 
+/**
+ * Appends delivery time live data (while checkout) or order meta to product name
+ *  
+ * @param  string $title    
+ * @param  array $cart_item 
+ * @return string
+ */
+function wc_gzd_cart_product_delivery_time( $title, $cart_item ) {
+	$delivery_time = "";
+	if ( isset( $cart_item[ 'data' ] ) ) {
+		$product = wc_get_product( $cart_item[ 'data' ] );
+		if ( $product->gzd_product->get_delivery_time_term() )
+			$delivery_time = $product->gzd_product->get_delivery_time_html();
+	} else if ( isset( $cart_item[ 'delivery_time' ] ) )
+		$delivery_time = $cart_item[ 'delivery_time' ];
+	if ( ! empty( $delivery_time ) )
+		$title .= '<p class="price-shipping-costs-info">' . $delivery_time . '</p>';
+	return $title;
+}
+
+/**
+ * Appends unit price to product price live data (while checkout) or order meta to product price
+ *  
+ * @param  string $price     
+ * @param  array $cart_item 
+ * @return string            
+ */
+function wc_gzd_cart_product_unit_price( $price, $cart_item ) {
+	$unit_price = "";
+	if ( isset( $cart_item[ 'data' ] ) ) {
+		$product = wc_get_product( $cart_item[ 'data' ] );
+		if ( $product->gzd_product->has_unit() )
+			$unit_price = $product->gzd_product->get_unit_html( false );
+	} else if ( isset( $cart_item[ 'unit_price' ] ) )
+		$unit_price = $cart_item[ 'unit_price' ];
+	if ( ! empty( $unit_price ) )
+		$price .= ' <span class="unit-price unit-price-cart">' . $unit_price . '</span>';
+	return $price;
+}
+
+/**
+ * Calculates tax share for shipping/fees
+ *  
+ * @param  string $type 
+ * @return array       
+ */
 function wc_gzd_get_cart_tax_share( $type = 'shipping' ) {
 	$cart = WC()->cart->get_cart();
 	$tax_shares = array();
@@ -36,7 +91,7 @@ function wc_gzd_get_cart_tax_share( $type = 'shipping' ) {
 	// Get tax classes and tax amounts
 	if ( ! empty( $cart ) ) {
 		foreach ( $cart as $key => $item ) {
-			$_product = $item['data'];
+			$_product = wc_get_product( $item['data'] );
 			// Dont calculate share if is shipping and product is virtual or vat exception
 			if ( $type == 'shipping' && $_product->is_virtual() || ( $_product->gzd_product->is_virtual_vat_exception() && $type == 'shipping' ) )
 				continue;
@@ -53,7 +108,7 @@ function wc_gzd_get_cart_tax_share( $type = 'shipping' ) {
 	}
 	if ( ! empty( $tax_shares ) ) {
 		foreach ( $tax_shares as $key => $class )
-			$tax_shares[ $key ][ 'share' ] = $class[ 'total' ] / $item_totals;
+			$tax_shares[ $key ][ 'share' ] = ( $item_totals > 0 ? $class[ 'total' ] / $item_totals : 0 );
 	}
 	return $tax_shares;
 }
@@ -80,6 +135,8 @@ function wc_gzd_cart_totals_order_total_tax_html() {
 		if ( get_option( 'woocommerce_tax_total_display' ) == 'itemized' ) {
 			foreach ( WC()->cart->get_tax_totals() as $code => $tax ) {
 				$rate = wc_gzd_get_tax_rate( $tax->tax_rate_id );
+				if ( ! $rate )
+					continue;
 				if ( ! empty( $rate ) && isset( $rate->tax_rate ) )
 					$tax->rate = $rate->tax_rate;
 				if ( ! isset( $tax_array[ $tax->rate ] ) )
