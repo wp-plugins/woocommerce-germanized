@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce Germanized
  * Plugin URI: https://www.vendidero.de/woocommerce-germanized
  * Description: Extends WooCommerce to become a legally compliant store for the german market.
- * Version: 1.3.1
+ * Version: 1.3.2
  * Author: Vendidero
  * Author URI: https://vendidero.de
  * Requires at least: 3.8
@@ -26,7 +26,7 @@ final class WooCommerce_Germanized {
 	 *
 	 * @var string
 	 */
-	public $version = '1.3.1';
+	public $version = '1.3.2';
 
 	/**
 	 * Single instance of WooCommerce Germanized Main Class
@@ -327,13 +327,15 @@ final class WooCommerce_Germanized {
 		if ( defined( 'DOING_AJAX' ) )
 			$this->ajax_includes();
 
-		if ( ! is_admin() || defined( 'DOING_AJAX' ) )
-			add_action( 'init', array( $this, 'frontend_includes' ), 5 );
+		if ( ( ! is_admin() || defined( 'DOING_AJAX' ) ) && ! defined( 'DOING_CRON' ) )
+			add_action( 'woocommerce_loaded', array( $this, 'frontend_includes' ), 5 );
 
 		// Post types
 		include_once ( 'includes/class-wc-gzd-post-types.php' );
 		// Gateway manipulation
 		include_once ( 'includes/class-wc-gzd-payment-gateways.php' );
+		// Template priority
+		include_once ( 'includes/class-wc-gzd-hook-priorities.php' );
 
 		// Abstracts
 		include_once ( 'includes/abstracts/abstract-wc-gzd-product.php' );
@@ -394,7 +396,7 @@ final class WooCommerce_Germanized {
 
 		// Load Default
 		if ( ! $theme_template && file_exists( apply_filters( 'woocommerce_gzd_default_plugin_template', $this->plugin_path() . '/templates/' . $template_name, $template_name ) ) )
-			return apply_filters( 'woocommerce_gzd_default_plugin_template', $this->plugin_path() . '/templates/' . $template_name, $template_name );
+			$template = apply_filters( 'woocommerce_gzd_default_plugin_template', $this->plugin_path() . '/templates/' . $template_name, $template_name );
 		else if ( $theme_template )
 			$template = $theme_template;
 		
@@ -648,18 +650,15 @@ final class WooCommerce_Germanized {
 	}
 
 	/**
-	 * PHP 5.3 backwards compatibility for getting date diff
+	 * PHP 5.3 backwards compatibility for getting date diff in days
 	 *  
 	 * @param  string $from date from
 	 * @param  string $to   date to
-	 * @return array  array containing year, month, date diff
+	 * @return array
 	 */
 	public function get_date_diff( $from, $to ) {
 		$diff = abs( strtotime( $to ) - strtotime( $from ) );
-		$years = floor( $diff / (365*60*60*24) );
-		$months = floor( ( $diff - $years * 365*60*60*24 ) / ( 30*60*60*24 ) );
-		$days = floor( ( $diff - $years * 365*60*60*24 - $months*30*60*60*24 ) / ( 60*60*24 ) );
-		return array( 'y' => $years, 'm' => $months, 'd' => $days );
+		return array( 'd' => floor( $diff / ( 60*60*24 ) ) );
 	}
 
 	/**
