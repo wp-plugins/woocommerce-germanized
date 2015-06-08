@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce Germanized
  * Plugin URI: https://www.vendidero.de/woocommerce-germanized
  * Description: Extends WooCommerce to become a legally compliant store for the german market.
- * Version: 1.3.2
+ * Version: 1.3.3
  * Author: Vendidero
  * Author URI: https://vendidero.de
  * Requires at least: 3.8
@@ -26,7 +26,7 @@ final class WooCommerce_Germanized {
 	 *
 	 * @var string
 	 */
-	public $version = '1.3.2';
+	public $version = '1.3.3';
 
 	/**
 	 * Single instance of WooCommerce Germanized Main Class
@@ -199,15 +199,8 @@ final class WooCommerce_Germanized {
 		// Remove cart subtotal filter
 		add_action( 'template_redirect', array( $this, 'remove_cart_unit_price_filter' ) );
 
-		// Remove processing + on-hold default order confirmation mails
-		$mailer = WC()->mailer();
-		$mails = $mailer->get_emails();
-		remove_action( 'woocommerce_order_status_pending_to_processing_notification', array( $mails[ 'WC_Email_Customer_Processing_Order' ], 'trigger' ) );
-		remove_action( 'woocommerce_order_status_pending_to_on-hold_notification', array( $mails[ 'WC_Email_Customer_Processing_Order' ], 'trigger' ) );
-		remove_action( 'woocommerce_order_status_pending_to_processing_notification', array( $mails[ 'WC_Email_New_Order' ], 'trigger' ) );
-		remove_action( 'woocommerce_order_status_pending_to_on-hold_notification', array( $mails[ 'WC_Email_New_Order' ], 'trigger' ) );
-		remove_action( 'woocommerce_order_status_pending_to_completed_notification', array( $mails[ 'WC_Email_New_Order' ], 'trigger' ) );
-
+		add_action( 'woocommerce_email', array( $this, 'remove_order_hooks' ), 0, 1 );
+		
 		$this->units          = new WC_GZD_Units();
 		$this->trusted_shops  = new WC_GZD_Trusted_Shops();
 		$this->ekomi    	  = new WC_GZD_Ekomi();
@@ -215,6 +208,18 @@ final class WooCommerce_Germanized {
 
 		// Init action
 		do_action( 'woocommerce_germanized_init' );
+	}
+
+	public function remove_order_hooks( $mailer ) {
+
+		$mails = $mailer->get_emails();
+		
+		remove_action( 'woocommerce_order_status_pending_to_processing_notification', array( $mails[ 'WC_Email_Customer_Processing_Order' ], 'trigger' ) );
+		remove_action( 'woocommerce_order_status_pending_to_on-hold_notification', array( $mails[ 'WC_Email_Customer_Processing_Order' ], 'trigger' ) );
+		remove_action( 'woocommerce_order_status_pending_to_processing_notification', array( $mails[ 'WC_Email_New_Order' ], 'trigger' ) );
+		remove_action( 'woocommerce_order_status_pending_to_on-hold_notification', array( $mails[ 'WC_Email_New_Order' ], 'trigger' ) );
+		remove_action( 'woocommerce_order_status_pending_to_completed_notification', array( $mails[ 'WC_Email_New_Order' ], 'trigger' ) );
+
 	}
 
 	/**

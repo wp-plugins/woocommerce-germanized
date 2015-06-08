@@ -19,37 +19,56 @@ class WC_GZD_Emails {
 	 */
 	public function __construct() {
 
-		$this->footer_attachments = array(
-			'woocommerce_gzd_mail_attach_revocation' => woocommerce_get_page_id ( 'revocation' ),
-			'woocommerce_gzd_mail_attach_terms' => woocommerce_get_page_id ( 'terms' ),
-			'woocommerce_gzd_mail_attach_data_security' => woocommerce_get_page_id ( 'data_security' ),
-			'woocommerce_gzd_mail_attach_imprint' => woocommerce_get_page_id ( 'imprint' ),
-		);
+		// Order attachments
+		$attachment_order = wc_gzd_get_email_attachment_order();
+		$this->footer_attachments = array();
+
+		foreach ( $attachment_order as $key => $order )
+			$this->footer_attachments[ 'woocommerce_gzd_mail_attach_' . $key ] = woocommerce_get_page_id ( $key );
+
+		add_action( 'woocommerce_email', array( $this, 'email_hooks' ), 0, 1 );
+	}
+
+	public function email_hooks( $mailer ) {
 
 		// Add new customer activation
 		if ( get_option( 'woocommerce_gzd_customer_activation' ) == 'yes' ) {
-			remove_action( 'woocommerce_created_customer_notification', array( WC()->mailer(), 'customer_new_account' ), 10 );
+			
+			remove_action( 'woocommerce_created_customer_notification', array( $mailer, 'customer_new_account' ), 10 );
 			add_action( 'woocommerce_created_customer_notification', array( $this, 'customer_new_account_activation' ), 9, 3 );
+		
 		}
 
 		// Hook before WooCommerce Footer is applied
-		remove_action( 'woocommerce_email_footer', array( WC()->mailer(), 'email_footer' ) );
+		remove_action( 'woocommerce_email_footer', array( $mailer, 'email_footer' ) );
 		add_action( 'woocommerce_email_footer', array( $this, 'add_template_footers' ), 0 );
-		add_action( 'woocommerce_email_footer', array( WC()->mailer(), 'email_footer' ), 1 );
+		add_action( 'woocommerce_email_footer', array( $mailer, 'email_footer' ), 1 );
+
+		add_filter( 'woocommerce_email_footer_text', array( $this, 'email_footer_plain' ), 0 );
 
 		add_filter( 'woocommerce_email_styles', array( $this, 'styles' ) );
 
-		$mails = WC()->mailer()->get_emails();
+		$mails = $mailer->get_emails();
 
 		if ( ! empty( $mails ) ) {
-			foreach ( $mails as $mail ) {
+
+			foreach ( $mails as $mail )
 				add_action( 'woocommerce_germanized_email_footer_' . $mail->id, array( $this, 'hook_mail_footer' ), 10, 1 );
-			}
 		}
 
 		add_filter( 'woocommerce_order_item_product', array( $this, 'set_order_email_filters' ), 0, 1 );
+
 	}
 
+	public function email_footer_plain( $text ) {
+
+		$type = ( ! empty( $GLOBALS[ 'wc_gzd_template_name' ] ) ) ? $this->get_email_instance_by_tpl( $GLOBALS[ 'wc_gzd_template_name' ] ) : '';
+		
+		if ( ! empty( $type ) && $type->get_email_type() == 'plain' )
+			$this->add_template_footers();
+
+	}
+ 
 	public function set_order_email_filters( $product ) {
 		if ( is_wc_endpoint_url()  )
 			return $product;
@@ -112,7 +131,7 @@ class WC_GZD_Emails {
 				if ( $option == -1 || ! get_option( $option_key ) )
 					continue;
 				if ( in_array( $mail->id, get_option( $option_key ) ) ) {
-					$this->attach_page_content( $option );
+					$this->attach_page_content( $option, $mail->get_email_type() );
 				}
 			}
 		}
@@ -155,12 +174,19 @@ class WC_GZD_Emails {
 	 *  
 	 * @param  integer $page_id 
 	 */
-	public function attach_page_content( $page_id ) {
+	public function attach_page_content( $page_id, $email_type = 'html' ) {
+		
 		remove_shortcode( 'revocation_form' );
 		add_shortcode( 'revocation_form', array( $this, 'revocation_form_replacement' ) );
-		wc_get_template( 'emails/email-footer-attachment.php', array(
+		
+		$template = 'emails/email-footer-attachment.php';
+		if ( $email_type == 'plain' )
+			$template = 'emails/plain/email-footer-attachment.php';
+		
+		wc_get_template( $template, array(
 			'post_attach'  => get_post( $page_id ),
 		) );
+		
 		add_shortcode( 'revocation_form', 'WC_GZD_Shortcodes::revocation_form' );
 	}
 
