@@ -42,22 +42,57 @@ class WC_GZD_Admin {
 		add_action( 'add_meta_boxes', array( $this, 'add_product_mini_desc' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'settings_page_scroll_top' ) );
 		add_action( 'save_post', array( $this, 'save_legal_page_content' ), 10, 3 );
+		add_action( 'admin_menu', array( $this, 'remove_status_page_hooks' ), 0 );
+		add_action( 'admin_menu', array( $this, 'set_status_page' ), 1 );
+	}
+
+	/**
+	 * Manually remove hook (class WC_Admin_Menus is noch callable)
+	 */
+	public function remove_status_page_hooks() {
+		global $wp_filter;
+		if ( isset( $wp_filter[ 'admin_menu' ][60] ) ) {
+			foreach ( $wp_filter[ 'admin_menu' ][60] as $k => $f ) {
+				if ( isset( $f[ 'function' ][1] ) && $f[ 'function' ][1] == 'status_menu' )
+					unset( $wp_filter[ 'admin_menu' ][60][$k] );
+			}
+		}
+	}
+
+	public function set_status_page() {
+		if ( ! is_ajax() ) {
+			include_once( 'class-wc-gzd-admin-status.php' );
+			add_action( 'admin_menu', array( $this, 'status_menu' ), 60 );
+		}
+	}
+
+	public function status_menu() {
+		add_submenu_page( 'woocommerce', __( 'WooCommerce Status', 'woocommerce' ),  __( 'System Status', 'woocommerce' ) , 'manage_woocommerce', 'wc-status', array( $this, 'status_page' ) );
+		register_setting( 'woocommerce_status_settings_fields', 'woocommerce_status_options' );
+	}
+
+	public function status_page() {
+		WC_GZD_Admin_Status::output();
 	}
 
 	public function settings_page_scroll_top() {
-	
+		
+		$screen = get_current_screen();
 		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 		$assets_path = WC_germanized()->plugin_url() . '/assets/';
+		$admin_script_path = $assets_path . 'js/admin/';
+
 		wp_register_style( 'woocommerce-gzd-admin', $assets_path . 'css/woocommerce-gzd-admin' . $suffix . '.css', false, WC_germanized()->version );
 		wp_enqueue_style( 'woocommerce-gzd-admin' );
-		
-		$admin_script_path = $assets_path . 'js/admin/';
+
+		wp_register_script( 'wc-gzd-admin', $admin_script_path . 'settings' . $suffix . '.js', array( 'jquery', 'woocommerce_settings' ), WC_GERMANIZED_VERSION, true );
+		wp_register_script( 'wc-gzd-admin-emails', $admin_script_path . 'emails' . $suffix . '.js', array( 'jquery', 'woocommerce_settings' ), WC_GERMANIZED_VERSION, true );
 		
 		if ( isset( $_GET[ 'tab' ] ) && $_GET[ 'tab' ] == 'germanized' )
-			wp_enqueue_script( 'wc-gzd-admin', $admin_script_path . 'settings' . $suffix . '.js', array( 'jquery', 'woocommerce_settings' ), WC_GERMANIZED_VERSION, true );
+			wp_enqueue_script( 'wc-gzd-admin' );
 		
 		if ( isset( $_GET[ 'section' ] ) && ! empty( $_GET[ 'section' ] ) && strpos( $_GET[ 'section' ], 'gzd' ) !== false )
-			wp_enqueue_script( 'wc-gzd-admin-emails', $admin_script_path . 'emails' . $suffix . '.js', array( 'jquery', 'woocommerce_settings' ), WC_GERMANIZED_VERSION, true );
+			wp_enqueue_script( 'wc-gzd-admin-emails' );
 
 		// Hide delivery time and unit tagsdiv
 		if ( version_compare( WC()->version, '2.3', '>=' ) )

@@ -32,6 +32,8 @@ class WC_Germanized_Meta_Box_Product_Data {
 
 		woocommerce_wp_select( array( 'id' => '_unit', 'label' => __( 'Unit', 'woocommerce-germanized' ), 'options' => array_merge( array( 'none' => __( 'Select unit', 'woocommerce-germanized' ) ), WC_germanized()->units->get_units() ), 'desc_tip' => true, 'description' => __( 'Needed if selling on a per unit basis', 'woocommerce-germanized' ) ) );
 		woocommerce_wp_text_input( array( 'id' => '_unit_base', 'label' => __( 'Unit Base', 'woocommerce-germanized' ), 'data_type' => 'decimal', 'desc_tip' => true, 'description' => __( 'Unit price per amount (e.g. 100)', 'woocommerce-germanized' ) ) );
+		woocommerce_wp_checkbox( array( 'id' => '_unit_price_auto', 'label' => __( 'Calculation', 'woocommerce-germanized' ), 'description' => '<span class="wc-gzd-premium-desc">' . __( 'Calculate unit prices automatically based on product price', 'woocommerce-germanized' ) . '</span> <a href="https://vendidero.de/woocommerce-germanized#buy" target="_blank" class="wc-gzd-pro">pro</a>' ) );
+
 		woocommerce_wp_text_input( array( 'id' => '_unit_price_regular', 'label' => __( 'Regular Unit Price', 'woocommerce-germanized' ) . ' (' . get_woocommerce_currency_symbol() . ')', 'data_type' => 'price' ) );
 		woocommerce_wp_text_input( array( 'id' => '_unit_price_sale', 'label' => __( 'Sale Unit Price', 'woocommerce-germanized' ) . ' (' . get_woocommerce_currency_symbol() . ')', 'data_type' => 'price' ) );
 		
@@ -47,33 +49,97 @@ class WC_Germanized_Meta_Box_Product_Data {
 		<?php
 	}
 
-	public static function save($post_id) {
-		if ( isset( $_POST['_unit'] ) ) {
-			update_post_meta( $post_id, '_unit', sanitize_text_field( $_POST['_unit'] ) );
+	public static function save( $post_id ) {
+
+		$data = array(
+			'product-type' => '',
+			'_unit' => '',
+			'_unit_base' => '',
+			'_unit_price_auto' => '',
+			'_unit_price_regular' => '',
+			'_unit_price_sale' => '',
+			'_mini_desc' => '',
+			'delivery_time' => '',
+			'_sale_price_dates_from' => '',
+			'_sale_price_dates_to' => '',
+			'_sale_price' => '',
+		);
+
+		foreach ( $data as $k => $v ) {
+			$data[ $k ] = ( isset( $_POST[ $k ] ) ? $_POST[ $k ] : null );
 		}
-		if ( isset( $_POST['_unit_base'] ) ) {
-			update_post_meta( $post_id, '_unit_base', ( $_POST['_unit_base'] === '' ) ? '' : wc_format_decimal( $_POST['_unit_base'] ) );
-		}
-		if ( isset( $_POST['_unit_price_regular'] ) ) {
-			update_post_meta( $post_id, '_unit_price_regular', ( $_POST['_unit_price_regular'] === '' ) ? '' : wc_format_decimal( $_POST['_unit_price_regular'] ) );
-			update_post_meta( $post_id, '_unit_price', ( $_POST['_unit_price_regular'] === '' ) ? '' : wc_format_decimal( $_POST['_unit_price_regular'] ) );
-		}
-		if ( isset( $_POST['_unit_price_sale'] ) ) {
-			update_post_meta( $post_id, '_unit_price_sale', '' );
-			// Update Sale Price only if is on sale (Cron?!)
-			if ( get_post_meta( $post_id, '_price', true ) != $_POST['_regular_price'] && $_POST['_unit_price_sale'] !== '' ) {
-				update_post_meta( $post_id, '_unit_price_sale', ( $_POST['_unit_price_sale'] === '' ) ? '' : wc_format_decimal( $_POST['_unit_price_sale'] ) );
-				update_post_meta( $post_id, '_unit_price', ( $_POST['_unit_price_sale'] === '' ) ? '' : wc_format_decimal( $_POST['_unit_price_sale'] ) );
-			}
-		}
-		if ( isset( $_POST[ '_mini_desc' ] ) ) {
-			update_post_meta( $post_id, '_mini_desc', esc_html( $_POST[ '_mini_desc' ] ) );
+
+		self::save_product_data( $post_id, $data );
+
+	}
+
+	public static function save_product_data( $post_id, $data, $is_variation = false ) {
+
+		$product_type    = empty( $data['product-type'] ) ? 'simple' : sanitize_title( stripslashes( $data['product-type'] ) );
+		
+		if ( isset( $data['_unit'] ) ) {
+			update_post_meta( $post_id, '_unit', ( $data['_unit'] === '' ? '' : sanitize_text_field( $data['_unit'] ) ) );
 		}
 		
-		if ( isset( $_POST[ 'delivery_time' ] ) && ! is_numeric( $_POST[ 'delivery_time' ] ) )
-			wp_set_post_terms( $post_id, sanitize_text_field( $_POST[ 'delivery_time' ] ), 'product_delivery_time' );
+		if ( isset( $data['_unit_base'] ) ) {
+			update_post_meta( $post_id, '_unit_base', ( $data['_unit_base'] === '' ) ? '' : wc_format_decimal( $data['_unit_base'] ) );
+		}
+
+		update_post_meta( $post_id, '_unit_price_auto', ( isset( $data['_unit_price_auto'] ) ) ? 'yes' : '' );
+		
+		if ( isset( $data['_unit_price_regular'] ) ) {
+			update_post_meta( $post_id, '_unit_price_regular', ( $data['_unit_price_regular'] === '' ) ? '' : wc_format_decimal( $data['_unit_price_regular'] ) );
+			update_post_meta( $post_id, '_unit_price', ( $data['_unit_price_regular'] === '' ) ? '' : wc_format_decimal( $data['_unit_price_regular'] ) );
+		}
+		
+		if ( isset( $data['_unit_price_sale'] ) ) {
+
+			// Unset unit price sale if no product sale price has been defined
+			if ( ! isset( $data['_sale_price'] ) || $data['_sale_price'] === '' )
+				$data['_unit_price_sale'] = '';
+
+			update_post_meta( $post_id, '_unit_price_sale', ( $data['_unit_price_sale'] === '' ) ? '' : wc_format_decimal( $data['_unit_price_sale'] ) );
+		}
+		
+		if ( isset( $data[ '_mini_desc' ] ) ) {
+			update_post_meta( $post_id, '_mini_desc', ( $data[ '_mini_desc' ] === '' ? '' : esc_html( $data[ '_mini_desc' ] ) ) );
+		}
+		
+		if ( isset( $data[ 'delivery_time' ] ) && ! is_numeric( $data[ 'delivery_time' ] ) )
+			wp_set_post_terms( $post_id, sanitize_text_field( $data[ 'delivery_time' ] ), 'product_delivery_time' );
+		else if ( is_numeric( $data[ 'delivery_time' ] ) )
+			wp_set_object_terms( $post_id, absint( $data[ 'delivery_time' ] ) , 'product_delivery_time' );
 		else
-			wp_set_object_terms( $post_id, absint( $_POST[ 'delivery_time' ] ) , 'product_delivery_time' );
+			wp_delete_object_term_relationships( $post_id, 'product_delivery_time' );
+
+		// Sale prices
+		if ( in_array( $product_type, array( 'variable', 'grouped' ) ) && ! $is_variation ) {
+
+			update_post_meta( $post_id, '_unit_price_regular', '' );
+			update_post_meta( $post_id, '_unit_price_sale', '' );
+			update_post_meta( $post_id, '_unit_price', '' );
+
+		} else {
+
+			$date_from = isset( $data['_sale_price_dates_from'] ) ? wc_clean( $data['_sale_price_dates_from'] ) : '';
+			$date_to   = isset( $data['_sale_price_dates_to'] ) ? wc_clean( $data['_sale_price_dates_to'] ) : '';
+
+			// Update price if on sale
+			if ( '' !== $data['_unit_price_sale'] && '' == $date_to && '' == $date_from ) {
+				update_post_meta( $post_id, '_unit_price', wc_format_decimal( $data['_unit_price_sale'] ) );
+			} else {
+				update_post_meta( $post_id, '_unit_price', ( $data['_unit_price_regular'] === '' ) ? '' : wc_format_decimal( $data['_unit_price_regular'] ) );
+			}
+
+			if ( '' !== $data['_unit_price_sale'] && $date_from && strtotime( $date_from ) < strtotime( 'NOW', current_time( 'timestamp' ) ) ) {
+				update_post_meta( $post_id, '_unit_price', wc_format_decimal( $data['_unit_price_sale'] ) );
+			}
+
+			if ( $date_to && strtotime( $date_to ) < strtotime( 'NOW', current_time( 'timestamp' ) ) )
+				update_post_meta( $post_id, '_unit_price', ( $data['_unit_price_regular'] === '' ) ? '' : wc_format_decimal( $data['_unit_price_regular'] ) );
+	
+		}
+
 	}
 
 }

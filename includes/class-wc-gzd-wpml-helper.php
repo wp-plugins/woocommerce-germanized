@@ -19,8 +19,10 @@ class WC_GZD_WPML_Helper {
 	}
 
 	public function __construct() {
+		
 		if ( ! $this->is_activated() ) 
 			return;
+		
 		$this->filter_page_ids();
 	}
 
@@ -42,11 +44,11 @@ class WC_GZD_WPML_Helper {
         }
 	}
 
-	function translate_page( $id ) {
+	public function translate_page( $id ) {
         global $pagenow;
         if( is_admin() && $pagenow == 'options-permalink.php' )
             return $id;
-        return icl_object_id( $id, 'page', true );
+        return apply_filters( 'translate_object_id', $id, 'page', true );
     }
 
 }

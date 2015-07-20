@@ -31,11 +31,11 @@ class WC_GZD_Product {
 		if ( is_numeric( $product ) )
 			$product = WC()->product_factory->get_product_standalone( get_post( $product ) );
 		$this->gzd_variation_level_meta = array(
-			'unit' 				 => 0,
-			'unit_price' 		 => 0,
-			'unit_base' 		 => 0,
-			'unit_price_regular' => 0,
-			'unit_price_sale' 	 => 0,
+			'unit' 				 => '',
+			'unit_price' 		 => '',
+			'unit_base' 		 => '',
+			'unit_price_regular' => '',
+			'unit_price_sale' 	 => '',
 			'mini_desc' 		 => '',
 			'gzd_product' 		 => NULL,
 		);
@@ -116,6 +116,7 @@ class WC_GZD_Product {
 	 */
 	public function get_tax_info() {
 		$_tax  = new WC_Tax();
+		$tax_notice = false;
 		if ( $this->is_taxable() ) {
 			$tax_display_mode = get_option( 'woocommerce_tax_display_shop' );
 			$tax_rates  = $_tax->get_rates( $this->get_tax_class() );
@@ -123,11 +124,12 @@ class WC_GZD_Product {
 				$tax_rates = array_values( $tax_rates );
 				// If is variable or is virtual vat exception dont show exact tax rate
 				if ( $this->is_virtual_vat_exception() || $this->is_type( 'variable' ) )
-					return ( $tax_display_mode == 'incl' ? __( 'incl. VAT', 'woocommerce-germanized' ) : __( 'excl. VAT', 'woocommerce-germanized' ) );
-				return ( $tax_display_mode == 'incl' ? sprintf( __( 'incl. %s%% VAT', 'woocommerce-germanized' ), ( wc_gzd_format_tax_rate_percentage( $tax_rates[0][ 'rate' ] ) ) ) : sprintf( __( 'excl. %s%% VAT', 'woocommerce-germanized' ), ( wc_gzd_format_tax_rate_percentage( $tax_rates[0][ 'rate' ] ) ) ) );
+					$tax_notice = ( $tax_display_mode == 'incl' ? __( 'incl. VAT', 'woocommerce-germanized' ) : __( 'excl. VAT', 'woocommerce-germanized' ) );
+				else
+					$tax_notice = ( $tax_display_mode == 'incl' ? sprintf( __( 'incl. %s%% VAT', 'woocommerce-germanized' ), ( wc_gzd_format_tax_rate_percentage( $tax_rates[0][ 'rate' ] ) ) ) : sprintf( __( 'excl. %s%% VAT', 'woocommerce-germanized' ), ( wc_gzd_format_tax_rate_percentage( $tax_rates[0][ 'rate' ] ) ) ) );
 			}
 		} 
-		return false;
+		return apply_filters( 'woocommerce_gzd_product_tax_info', $tax_notice, $this );
 	}
 
 	/**
@@ -199,7 +201,7 @@ class WC_GZD_Product {
 	 */
 	public function get_unit_price_including_tax( $qty = 1, $price = '' ) {
 		$price = ( $price == '' ) ? $this->unit_price : $price;
-		return $this->child->get_price_including_tax( $qty, $price );
+		return $this->get_price_including_tax( $qty, $price );
 	}
 
 	/**
@@ -220,7 +222,7 @@ class WC_GZD_Product {
 	 * @return boolean 
 	 */
 	public function is_on_unit_sale() {
-		return ( $this->get_unit_sale_price() ) ? true : false;
+		return apply_filters( 'woocommerce_gzd_product_is_on_unit_sale', ( $this->get_unit_sale_price() !== $this->get_unit_regular_price() && $this->get_unit_sale_price() == $this->get_unit_price() ), $this );
 	}
 
 	/**

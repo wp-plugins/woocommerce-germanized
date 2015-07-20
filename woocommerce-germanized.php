@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce Germanized
  * Plugin URI: https://www.vendidero.de/woocommerce-germanized
  * Description: Extends WooCommerce to become a legally compliant store for the german market.
- * Version: 1.3.4
+ * Version: 1.3.5
  * Author: Vendidero
  * Author URI: https://vendidero.de
  * Requires at least: 3.8
@@ -26,7 +26,7 @@ final class WooCommerce_Germanized {
 	 *
 	 * @var string
 	 */
-	public $version = '1.3.4';
+	public $version = '1.3.5';
 
 	/**
 	 * Single instance of WooCommerce Germanized Main Class
@@ -199,8 +199,8 @@ final class WooCommerce_Germanized {
 		// Remove cart subtotal filter
 		add_action( 'template_redirect', array( $this, 'remove_cart_unit_price_filter' ) );
 
-		add_action( 'woocommerce_email', array( $this, 'remove_order_hooks' ), 0, 1 );
-		
+		$this->unregister_order_confirmation_hooks();
+
 		$this->units          = new WC_GZD_Units();
 		$this->trusted_shops  = new WC_GZD_Trusted_Shops();
 		$this->ekomi    	  = new WC_GZD_Ekomi();
@@ -210,7 +210,18 @@ final class WooCommerce_Germanized {
 		do_action( 'woocommerce_germanized_init' );
 	}
 
-	public function remove_order_hooks( $mailer ) {
+	public function unregister_order_confirmation_hooks() {
+
+		$statuses = array( 'completed', 'on-hold', 'processing' );
+		
+		foreach ( $statuses as $status )
+			add_action( 'woocommerce_order_status_' . $status, array( $this, 'remove_order_hooks' ), 0 );
+
+	}
+
+	public function remove_order_hooks() {
+
+		$mailer = WC()->mailer();
 
 		$mails = $mailer->get_emails();
 		
@@ -346,8 +357,9 @@ final class WooCommerce_Germanized {
 		include_once ( 'includes/abstracts/abstract-wc-gzd-product.php' );
 
 		include_once ( 'includes/class-wc-gzd-wpml-helper.php' );
-
+		
 		include_once ( 'includes/wc-gzd-cart-functions.php' );
+
 		include_once ( 'includes/class-wc-gzd-checkout.php' );
 
 	}
