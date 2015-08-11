@@ -71,12 +71,12 @@ class WC_Germanized_Meta_Box_Product_Data_Variable {
 				<label for="delivery_time"><?php _e( 'Delivery Time', 'woocommerce-germanized' ); ?></label>
 				<input type="hidden" class="wc-product-search wc-gzd-delivery-time-search" style="width: 100%" id="variable_delivery_time_<?php echo $loop; ?>" name="variable_delivery_time[<?php echo $loop; ?>]" data-minimum_input_length="1" data-allow_clear="true" data-placeholder="<?php _e( 'Search for a delivery time&hellip;', 'woocommerce-germanized' ); ?>" data-action="woocommerce_gzd_json_search_delivery_time" data-multiple="false" data-selected="<?php echo ( $delivery_time ? $delivery_time->name : '' ); ?>" value="<?php echo ( $delivery_time ? $delivery_time->term_id : '' ); ?>" />
 			</p>
-			
 		</div>
 		<div class="variable_cart_mini_desc">
 			<p class="form-row form-row-full">
 				<label for="variable_mini_desc"><?php echo __( 'Optional Mini Description', 'woocommerce-germanized' ); ?>:</label>
-				<?php wp_editor( htmlspecialchars_decode( $_product->gzd_product->mini_desc ), 'wc_gzd_product_mini_desc_' . $loop, array( 'textarea_name' => 'variable_mini_desc[' . $loop . ']', 'textarea_rows' => 5, 'media_buttons' => false, 'teeny' => true ) ); ?>
+				<textarea rows="3" style="width: 100%" name="variable_mini_desc[<?php echo $loop;?>]" id="variable_mini_desc_<?php echo $loop;?>" class="variable_mini_desc"><?php echo htmlspecialchars_decode( $_product->gzd_product->mini_desc ); ?></textarea>
+				<?php // wp_editor( htmlspecialchars_decode( $_product->gzd_product->mini_desc ), 'wc_gzd_product_mini_desc_' . $loop, array( 'textarea_name' => 'variable_mini_desc[' . $loop . ']', 'textarea_rows' => 5, 'media_buttons' => false, 'teeny' => true ) ); ?>
 			</p>
 		</div>
 		<?php
@@ -158,7 +158,8 @@ class WC_Germanized_Meta_Box_Product_Data_Variable {
 			$data[ $k ] = ( isset( $_POST[ $data_k ][$i] ) ? $_POST[ $data_k ][$i] : null );
 		}
 
-		$data[ 'product-type' ] = $_POST[ 'product-type' ];
+		$product = wc_get_product( $variation_id );
+		$data[ 'product-type' ] = ( isset( $product->parent ) ? $product->parent->product_type : $product->type );
 		$data[ '_sale_price_dates_from' ] = $_POST['variable_sale_price_dates_from'][$i];
 		$data[ '_sale_price_dates_to' ] = $_POST['variable_sale_price_dates_to'][$i];
 		$data[ '_sale_price' ] = $_POST['variable_sale_price'][$i];

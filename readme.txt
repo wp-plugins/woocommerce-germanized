@@ -3,8 +3,8 @@ Contributors: vendidero
 Tags: woocommerce, german market, german, germany, deutsch, deutschland, de, de_DE, shop, commerce, e-commerce, ecommerce, woothemes
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=info@vendidero.de&item_name=Donation+for+WooCommerce+Germanized
 Requires at least: 3.8
-Tested up to: 4.2
-Stable tag: 1.3.5
+Tested up to: 4.3
+Stable tag: 1.3.6
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -162,6 +162,15 @@ Bugs sowie Hilfe bei der Arbeit an WooCommerce Germanized werden gerne über uns
 1. Einstellungsmöglichkeiten für WooCommerce Germanized.
 
 == Changelog ==
+
+= 1.3.6 =
+* Feature - WC 2.4 compatibility
+* Fix - better checkbox html syntax
+* Fix - tax notice vat exempt check
+* Fix - FontAwesome Admin update
+* Fix - better theme compatibility
+* Fix - unforce shipping calculation
+* Fix - better script loading
 
 = 1.3.5 = 
 * Feature - force free shipping method if available (optional)

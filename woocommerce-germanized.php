@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce Germanized
  * Plugin URI: https://www.vendidero.de/woocommerce-germanized
  * Description: Extends WooCommerce to become a legally compliant store for the german market.
- * Version: 1.3.5
+ * Version: 1.3.6
  * Author: Vendidero
  * Author URI: https://vendidero.de
  * Requires at least: 3.8
@@ -26,7 +26,7 @@ final class WooCommerce_Germanized {
 	 *
 	 * @var string
 	 */
-	public $version = '1.3.5';
+	public $version = '1.3.6';
 
 	/**
 	 * Single instance of WooCommerce Germanized Main Class
@@ -164,7 +164,8 @@ final class WooCommerce_Germanized {
 		
 		add_filter( 'woocommerce_get_settings_pages', array( $this, 'add_settings' ) );
 		add_filter( 'woocommerce_enqueue_styles', array( $this, 'add_styles' ) );
-		add_action( 'wp_enqueue_scripts', array( $this, 'add_scripts' ) );
+		// Load after WooCommerce Frontend scripts
+		add_action( 'wp_enqueue_scripts', array( $this, 'add_scripts' ), 15 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'add_inline_styles' ) );
 		add_action( 'wp_print_scripts', array( $this, 'localize_scripts' ), 5 );
 		add_filter( 'woocommerce_email_classes', array( $this, 'add_emails' ) );
@@ -248,6 +249,10 @@ final class WooCommerce_Germanized {
 	 * @return array 
 	 */
 	public function replace_shipping_rate_class( $rates, $rate ) {
+
+		if ( get_option( 'woocommerce_gzd_shipping_tax' ) != 'yes' )
+			return $rates;
+
 		foreach ( $rates as $key => $rate )
 			$rates[ $key ] = new WC_GZD_Shipping_Rate( $rate );
 		return $rates;
@@ -615,7 +620,7 @@ final class WooCommerce_Germanized {
 		$suffix = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ? '' : '.min';
 		$assets_path = str_replace( array( 'http:', 'https:' ), '', WC_germanized()->plugin_url() ) . '/assets/';
 		$frontend_script_path = $assets_path . 'js/';
-		
+
 		if ( is_page() )
 			wp_enqueue_script( 'wc-gzd-revocation', $frontend_script_path . 'revocation' . $suffix . '.js', array( 'jquery', 'woocommerce', 'wc-country-select', 'wc-address-i18n' ), WC_GERMANIZED_VERSION, true );
 		
@@ -626,8 +631,7 @@ final class WooCommerce_Germanized {
 			$product = wc_get_product( $post->ID );
 			if ( $product && $product->is_type( 'variable' ) ) {
 				// Enqueue variation scripts
-				wp_enqueue_script( 'wc-add-to-cart-variation' );
-				wp_enqueue_script( 'wc-gzd-add-to-cart-variation', $frontend_script_path . 'add-to-cart-variation' . $suffix . '.js', array( 'jquery', 'woocommerce' ), WC_GERMANIZED_VERSION, true );
+				wp_enqueue_script( 'wc-gzd-add-to-cart-variation', $frontend_script_path . 'add-to-cart-variation' . $suffix . '.js', array( 'jquery', 'woocommerce', 'wc-add-to-cart-variation' ), WC_GERMANIZED_VERSION, true );
 			}
 		} 
 	}
