@@ -136,8 +136,10 @@ Please notice: Period for pre-information of the SEPA direct debit is shortened 
 
     	$order = wc_get_order( $order_id );
 
-    	if ( $order->payment_method == $this->id )
-    		WC()->mailer()->emails[ 'WC_GZD_Email_Customer_SEPA_Direct_Debit_Mandate' ]->trigger( $order );
+    	if ( $order->payment_method == $this->id ) {
+    		if ( $mail = WC_germanized()->emails->get_email_instance_by_id( 'customer_sepa_direct_debit_mandate' ) )
+    			$mail->trigger( $order );
+    	}
 
     }
 
@@ -160,6 +162,9 @@ Please notice: Period for pre-information of the SEPA direct debit is shortened 
     }
 
     public function generate_mandate() {
+
+    	if ( ! $this->is_available() )
+    		exit();
 
     	if ( ! isset( $_GET[ '_wpnonce' ] ) || ! wp_verify_nonce( $_GET[ '_wpnonce' ], 'show_direct_debit' ) )
     		exit();
@@ -349,6 +354,9 @@ Please notice: Period for pre-information of the SEPA direct debit is shortened 
 
 	public function validate_checkbox( $posted ) {
 
+		if ( ! $this->is_available() || $this->enable_checkbox !== 'yes' || ! isset( $_POST[ 'payment_method' ] ) || $_POST[ 'payment_method' ] != $this->id )
+			return;
+
 		if ( ! isset( $_POST[ 'woocommerce_checkout_update_totals' ] ) ) {
 
 			if ( ! isset( $_POST[ 'direct_debit_legal' ] ) && empty( $_POST[ 'direct_debit_legal' ] ) )
@@ -360,7 +368,7 @@ Please notice: Period for pre-information of the SEPA direct debit is shortened 
 
 	public function validate_fields() { 
 		
-		if ( ! isset( $_POST[ 'payment_method' ] ) || $_POST[ 'payment_method' ] != $this->id )
+		if ( ! $this->is_available() || ! isset( $_POST[ 'payment_method' ] ) || $_POST[ 'payment_method' ] != $this->id )
 			return;
 
 		$iban = ( isset( $_POST[ 'direct_debit_account_iban' ] ) ? wc_clean( $_POST[ 'direct_debit_account_iban' ] ) : '' );

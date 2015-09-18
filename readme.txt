@@ -4,7 +4,7 @@ Tags: woocommerce, german market, german, germany, deutsch, deutschland, de, de_
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=info@vendidero.de&item_name=Donation+for+WooCommerce+Germanized
 Requires at least: 3.8
 Tested up to: 4.3
-Stable tag: 1.4.0
+Stable tag: 1.4.2
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -60,6 +60,8 @@ Als Nutzer der Pro Version von WooCommerce Germanized erstellst du automatisiert
 Lade beispielsweise einfach ein PDF-Template hoch, das als "Hintergrund" für deine Rechnungen fungiert. Mit wenigen Klicks exportierst du deine Rechnungen (CSV, zip) für deine Buchhaltung oder deinen Steuerberater.
 Mehr Informationen? [PDF Rechnungen für WooCommerce](https://vendidero.de/woocommerce-germanized#accounting "WooCommerce PDF Rechnungen")
 
+Neu: Rechtliche Hinweisseiten (AGB, Widerrufsbelehrung) können nun auch als PDF-Anhang an die Transaktionsmails angehängt werden.
+
 = Steuern für Versandkosten und Gebühren =
 Das WooCommerce Plugin für den deutschen Markt unterstützt mit der aktuellen Version die komplizierte Besteuerung von Versandkosten bei "gemischten" Warenkörben (d.h. es befinden sich unterschiedliche MwSt.-Sätze im Warenkorb).
 In diesem Fall muss die Mehrwertsteuer der Versandkosten anteilig (basierend auf den Anteil der jeweiligen MwSt.-Rate an der Gesamtbestellung), anhand der unterschiedlichen MwSt.-Raten berechnet werden.
@@ -109,6 +111,7 @@ Overview of what WooCommerce Germanized offers:
 * ekomi integration
 * SEPA Payment gateway
 * Pay by Invoice gateway
+* double opt-in for customers
 
 == Installation ==
 
@@ -172,6 +175,19 @@ Bugs sowie Hilfe bei der Arbeit an WooCommerce Germanized werden gerne über uns
 1. Einstellungsmöglichkeiten für WooCommerce Germanized.
 
 == Changelog ==
+
+= 1.4.2 =
+* Feature - product units
+* Feature - digital product notice (loss of right of withdrawal) in order confirmation
+* Feature - turn off direct order confirmation by hidden option or filter
+* Feature - WooCommerce style updates
+* Fix - better base price
+* Fix - send mails by id not by classname
+* Fix - Trusted Shops review reminder days option
+* Fix - order item name filter fix
+
+= 1.4.1 =
+* Fix - Direct Debit SEPA checkbox validation
 
 = 1.4.0 =
 * Feature - SEPA Direct Debit Gateway

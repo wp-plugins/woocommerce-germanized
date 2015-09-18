@@ -3,7 +3,7 @@
  * Plugin Name: WooCommerce Germanized
  * Plugin URI: https://www.vendidero.de/woocommerce-germanized
  * Description: Extends WooCommerce to become a legally compliant store for the german market.
- * Version: 1.4.0
+ * Version: 1.4.2
  * Author: Vendidero
  * Author URI: https://vendidero.de
  * Requires at least: 3.8
@@ -26,7 +26,7 @@ final class WooCommerce_Germanized {
 	 *
 	 * @var string
 	 */
-	public $version = '1.4.0';
+	public $version = '1.4.2';
 
 	/**
 	 * Single instance of WooCommerce Germanized Main Class
@@ -114,7 +114,7 @@ final class WooCommerce_Germanized {
 		// Check if dependecies are installed
 		$init = WC_GZD_Dependencies::instance();
 		if ( ! $init->is_loadable() )
-			return; 
+			return;
 
 		// Define constants
 		$this->define_constants();
@@ -122,6 +122,7 @@ final class WooCommerce_Germanized {
 		$this->includes();
 
 		// Hooks
+		register_activation_hook( __FILE__, array( 'WC_GZD_Install', 'install' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( __FILE__ ), array( $this, 'action_links' ) );
 		add_action( 'after_setup_theme', array( $this, 'include_template_functions' ), 12 );
 		add_action( 'init', array( $this, 'init' ), 1 );
@@ -193,10 +194,6 @@ final class WooCommerce_Germanized {
 		// Add better WooCommerce shipping taxation
 		add_filter( 'woocommerce_package_rates', array( $this, 'replace_shipping_rate_class' ), 0, 2 );
 
-		// Send order notice directly after new order is being added - use these filters because order status has to be updated already
-		add_filter( 'woocommerce_payment_successful_result', array( $this, 'send_order_confirmation_mails' ), 0, 2 );
-		add_filter( 'woocommerce_checkout_no_payment_needed_redirect', array( $this, 'send_order_confirmation_mails' ), 0, 2 );
-
 		// Payment gateways
 		add_filter( 'woocommerce_payment_gateways', array( $this, 'register_gateways' ) );
 
@@ -207,69 +204,23 @@ final class WooCommerce_Germanized {
 		// Remove cart subtotal filter
 		add_action( 'template_redirect', array( $this, 'remove_cart_unit_price_filter' ) );
 
-		$this->unregister_order_confirmation_hooks();
+		// Let third party apps disable instant order confirmation
+		if ( apply_filters( 'woocommerce_gzd_instant_order_confirmation', true ) && ( 'yes' !== get_option( 'woocommerce_gzd_disable_instant_order_confirmation' ) ) ) {
+
+			// Unregister WooCommerce default order confirmation mails
+			$this->unregister_order_confirmation_hooks();
+
+			// Send order notice directly after new order is being added - use these filters because order status has to be updated already
+			add_filter( 'woocommerce_payment_successful_result', array( $this, 'send_order_confirmation_mails' ), 0, 2 );
+			add_filter( 'woocommerce_checkout_no_payment_needed_redirect', array( $this, 'send_order_confirmation_mails' ), 0, 2 );
+
+		}
 
 		$this->units          = new WC_GZD_Units();
 		$this->emails    	  = new WC_GZD_Emails();
 
 		// Init action
 		do_action( 'woocommerce_germanized_init' );
-	}
-
-	public function register_gateways( $gateways ) {
-
-		$gateways[] = 'WC_GZD_Gateway_Direct_Debit';
-		$gateways[] = 'WC_GZD_Gateway_Invoice';
-
-		return $gateways;
-
-	}
-
-	public function unregister_order_confirmation_hooks() {
-
-		$statuses = array( 'completed', 'on-hold', 'processing' );
-		
-		foreach ( $statuses as $status )
-			add_action( 'woocommerce_order_status_' . $status, array( $this, 'remove_order_hooks' ), 0 );
-
-	}
-
-	public function remove_order_hooks() {
-
-		$mailer = WC()->mailer();
-
-		$mails = $mailer->get_emails();
-		
-		remove_action( 'woocommerce_order_status_pending_to_processing_notification', array( $mails[ 'WC_Email_Customer_Processing_Order' ], 'trigger' ) );
-		remove_action( 'woocommerce_order_status_pending_to_on-hold_notification', array( $mails[ 'WC_Email_Customer_Processing_Order' ], 'trigger' ) );
-		remove_action( 'woocommerce_order_status_pending_to_processing_notification', array( $mails[ 'WC_Email_New_Order' ], 'trigger' ) );
-		remove_action( 'woocommerce_order_status_pending_to_on-hold_notification', array( $mails[ 'WC_Email_New_Order' ], 'trigger' ) );
-		remove_action( 'woocommerce_order_status_pending_to_completed_notification', array( $mails[ 'WC_Email_New_Order' ], 'trigger' ) );
-
-	}
-
-	/**
-	 * Overload product factory to inject gzd_product
-	 */
-	public function replace_woocommerce_product_factory() {
-		WC()->product_factory = new WC_GZD_Product_Factory();
-	}
-
-	/**
-	 * Replace default WC_Shipping_Rate to enable exact taxation for shipping costs
-	 *  
-	 * @param  array $rates containing WC_Shipping_Rate objects
-	 * @param  WC_Shipping_Rate $rate current object
-	 * @return array 
-	 */
-	public function replace_shipping_rate_class( $rates, $rate ) {
-
-		if ( get_option( 'woocommerce_gzd_shipping_tax' ) != 'yes' )
-			return $rates;
-
-		foreach ( $rates as $key => $rate )
-			$rates[ $key ] = new WC_GZD_Shipping_Rate( $rate );
-		return $rates;
 	}
 
 	/**
@@ -520,6 +471,30 @@ final class WooCommerce_Germanized {
 	}
 
 	/**
+	 * Overload product factory to inject gzd_product
+	 */
+	public function replace_woocommerce_product_factory() {
+		WC()->product_factory = new WC_GZD_Product_Factory();
+	}
+
+	/**
+	 * Replace default WC_Shipping_Rate to enable exact taxation for shipping costs
+	 *  
+	 * @param  array $rates containing WC_Shipping_Rate objects
+	 * @param  WC_Shipping_Rate $rate current object
+	 * @return array 
+	 */
+	public function replace_shipping_rate_class( $rates, $rate ) {
+
+		if ( get_option( 'woocommerce_gzd_shipping_tax' ) != 'yes' )
+			return $rates;
+
+		foreach ( $rates as $key => $rate )
+			$rates[ $key ] = new WC_GZD_Shipping_Rate( $rate );
+		return $rates;
+	}
+
+	/**
 	 * Calls a filter to temporarily set cart tax to zero. This is only done to hide the cart tax estimated text.
 	 * Filter is being remove right after get_cart_tax - check has been finished within cart-totals.php
 	 */
@@ -563,7 +538,14 @@ final class WooCommerce_Germanized {
 	}
 
 	/**
-	 * Load Localisation files for WooCommerce Germanized.
+	 * Load Localisation files.
+	 *
+	 * Note: the first-loaded translation file overrides any following ones if the same translation is present.
+	 *
+	 * Frontend/global Locales found in:
+	 * 		- WP_LANG_DIR/woocommerce-germanized/woocommerce-germanized-LOCALE.mo
+	 * 	 	- woocommerce-germanized/i18n/languages/woocommerce-germanized-LOCALE.mo (which if not found falls back to:)
+	 * 	 	- WP_LANG_DIR/plugins/woocommerce-germanized-LOCALE.mo
 	 */
 	public function load_plugin_textdomain() {
 		$domain = 'woocommerce-germanized';
@@ -737,6 +719,25 @@ final class WooCommerce_Germanized {
 		return apply_filters( 'woocommerce_germanized_email_template_hook', $core_file, $template, $template_base );
 	}
 
+	public function unregister_order_confirmation_hooks() {
+
+		$statuses = array( 'completed', 'on-hold', 'processing' );
+		
+		foreach ( $statuses as $status )
+			add_action( 'woocommerce_order_status_' . $status, array( $this, 'remove_order_email_hooks' ), 0 );
+
+	}
+
+	public function remove_order_email_hooks() {
+
+		remove_action( 'woocommerce_order_status_pending_to_processing_notification', array( $this->emails->get_email_instance_by_id( 'customer_processing_order' ), 'trigger' ) );
+		remove_action( 'woocommerce_order_status_pending_to_on-hold_notification', array( $this->emails->get_email_instance_by_id( 'customer_processing_order' ), 'trigger' ) );
+		remove_action( 'woocommerce_order_status_pending_to_processing_notification', array( $this->emails->get_email_instance_by_id( 'new_order' ), 'trigger' ) );
+		remove_action( 'woocommerce_order_status_pending_to_on-hold_notification', array( $this->emails->get_email_instance_by_id( 'new_order' ), 'trigger' ) );
+		remove_action( 'woocommerce_order_status_pending_to_completed_notification', array( $this->emails->get_email_instance_by_id( 'new_order' ), 'trigger' ) );
+
+	}
+
 	/**
 	 * Send order confirmation mail directly after order is being sent
 	 *  	
@@ -753,14 +754,25 @@ final class WooCommerce_Germanized {
 			update_post_meta( $order->id, '_order_payment_info', $result[ 'redirect' ] );		
 
 		// Send order processing mail
-		$mailer = WC()->mailer();
-		$mails = $mailer->get_emails();
-		$mails[ 'WC_Email_Customer_Processing_Order' ]->trigger( $order->id );
-		$mails[ 'WC_Email_New_Order' ]->trigger( $order->id );
+		if ( $processing = $this->emails->get_email_instance_by_id( 'customer_processing_order' ) )
+			$processing->trigger( $order->id );
+
+		// Send admin mail
+		if ( $new_order = $this->emails->get_email_instance_by_id( 'new_order' ) )
+			$new_order->trigger( $order->id );
 
 		do_action( 'woocommerce_germanized_order_confirmation_sent', $order->id );
 
 		return $result;
+	}
+
+	public function register_gateways( $gateways ) {
+
+		$gateways[] = 'WC_GZD_Gateway_Direct_Debit';
+		$gateways[] = 'WC_GZD_Gateway_Invoice';
+
+		return $gateways;
+
 	}
 
 	/**

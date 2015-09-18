@@ -39,6 +39,7 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 			$this->premium_sections = array(
 				'invoices' => sprintf( __( 'Invoices & Packing Slips %s', 'woocommerce-germanized' ), '<span class="wc-gzd-premium-section-tab">pro</span>' ),
 				'checkout' => sprintf( __( 'Multistep Checkout %s', 'woocommerce-germanized' ), '<span class="wc-gzd-premium-section-tab">pro</span>' ),
+				'pdf' 	   => sprintf( __( 'PDF %s', 'woocommerce-germanized' ), '<span class="wc-gzd-premium-section-tab">pro</span>' ),
 				'agbs'     => sprintf( __( 'Terms & Conditions generator %s', 'woocommerce-germanized' ), '<span class="wc-gzd-premium-section-tab">pro</span>' ),
 				'widerruf' => sprintf( __( 'Revocation generator %s', 'woocommerce-germanized' ), '<span class="wc-gzd-premium-section-tab">pro</span>' ),
 			);
@@ -55,7 +56,7 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 	public function image_field( $value ) {
 		?>
 		<tr valign="top">
-			<th class="forminp forminp-image">
+			<th class="forminp forminp-image" colspan="2">
 				<a href="<?php echo $value[ 'href' ]; ?>" target="_blank"><img src="<?php echo $value[ 'img' ]; ?>" /></a>
 			</th>
 		</tr>
@@ -193,7 +194,7 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 
 			array( 'type' => 'sectionend', 'id' => 'contract_options' ),
 
-			array(	'title' => __( 'Legal Pages', 'woocommerce-germanized' ), 'type' => 'title', 'id' => 'legal_pages_options' ),
+			array(	'title' => __( 'Legal Pages', 'woocommerce-germanized' ), 'type' => 'title', 'id' => 'legal_pages_options', 'desc' => ( ! WC_germanized()->is_pro() ? '<div class="notice inline notice-warning"><p>' . sprintf( __( 'Want to attach automatically generated PDF files to emails instead of plain text? %sUpgrade to %spro%s%s', 'woocommerce-germanized' ), '<a style="margin-left: 1em" href="https://vendidero.de/woocommerce-germanized" class="button">', '<span class="wc-gzd-pro">', '</span>', '</a>' ) . '</p></div>' : '' ) ),
 
 			array(
 				'title' 	=> __( 'Terms & Conditions', 'woocommerce-germanized' ),
@@ -204,6 +205,14 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 				'class'		=> 'chosen_select_nostd',
 				'css' 		=> 'min-width:300px;',
 				'desc'		=> ( ! get_option( 'woocommerce_terms_page_id' ) ? sprintf( __( 'Don\'t have terms & conditions yet? <a href="%s">Generate now</a>!', 'woocommerce-germanized' ), admin_url( 'admin.php?page=wc-settings&tab=germanized&section=agbs' ) ) : '' ),
+			),
+
+			array(
+				'title' 	=> '',
+				'id' 		=> 'woocommerce_gzdp_legal_page_terms',
+				'img'		=> WC_Germanized()->plugin_url() . '/assets/images/pro/settings-inline-legal-page.png',
+				'href'      => 'https://vendidero.de/woocommerce-germanized#legal-page',
+				'type' 		=> 'image',
 			),
 
 			array(
@@ -218,6 +227,14 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 			),
 
 			array(
+				'title' 	=> '',
+				'id' 		=> 'woocommerce_gzdp_legal_page_terms',
+				'img'		=> WC_Germanized()->plugin_url() . '/assets/images/pro/settings-inline-legal-page.png',
+				'href'      => 'https://vendidero.de/woocommerce-germanized#legal-page',
+				'type' 		=> 'image',
+			),
+
+			array(
 				'title' 	=> __( 'Imprint', 'woocommerce-germanized' ),
 				'desc' 		=> __( 'This page should contain an imprint with your company\'s information.', 'woocommerce-germanized' ),
 				'id' 		=> 'woocommerce_imprint_page_id',
@@ -229,6 +246,14 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 			),
 
 			array(
+				'title' 	=> '',
+				'id' 		=> 'woocommerce_gzdp_legal_page_terms',
+				'img'		=> WC_Germanized()->plugin_url() . '/assets/images/pro/settings-inline-legal-page.png',
+				'href'      => 'https://vendidero.de/woocommerce-germanized#legal-page',
+				'type' 		=> 'image',
+			),
+
+			array(
 				'title' 	=> __( 'Data Security Statement', 'woocommerce-germanized' ),
 				'desc' 		=> __( 'This page should contain information regarding your data security policy.', 'woocommerce-germanized' ),
 				'id' 		=> 'woocommerce_data_security_page_id',
@@ -237,6 +262,14 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 				'class'		=> 'chosen_select_nostd',
 				'css' 		=> 'min-width:300px;',
 				'desc_tip'	=> true,
+			),
+
+			array(
+				'title' 	=> '',
+				'id' 		=> 'woocommerce_gzdp_legal_page_terms',
+				'img'		=> WC_Germanized()->plugin_url() . '/assets/images/pro/settings-inline-legal-page.png',
+				'href'      => 'https://vendidero.de/woocommerce-germanized#legal-page',
+				'type' 		=> 'image',
 			),
 
 			array(
@@ -393,11 +426,11 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 
 			array( 'type' => 'sectionend', 'id' => 'customer_options' ),
 
-			array(	'title' => __( 'Unit Price', 'woocommerce-germanized' ), 'type' => 'title', 'id' => 'unit_price_options' ),
+			array(	'title' => __( 'Base Price', 'woocommerce-germanized' ), 'type' => 'title', 'id' => 'unit_price_options' ),
 
 			array(
-				'title' 	=> __( 'Unit Price Text', 'woocommerce-germanized' ),
-				'desc' 		=> __( 'This text will be used to display the unit price. Use {price} to insert the price.', 'woocommerce-germanized' ),
+				'title' 	=> __( 'Base Price Text', 'woocommerce-germanized' ),
+				'desc' 		=> __( 'This text will be used to display the base price. Use {price} to insert the price. If you want to specifically format base price output use {base}, {unit} and {base_price} as placeholders.', 'woocommerce-germanized' ),
 				'desc_tip'	=> true,
 				'id' 		=> 'woocommerce_gzd_unit_price_text',
 				'type' 		=> 'text',
@@ -552,7 +585,7 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 			),
 
 			array(
-				'desc' 		=> __( 'Unit Price', 'woocommerce-germanized' ),
+				'desc' 		=> __( 'Base Price', 'woocommerce-germanized' ),
 				'id' 		=> 'woocommerce_gzd_display_listings_unit_price',
 				'type' 		=> 'checkbox',
 				'default'	=> 'yes',
@@ -585,7 +618,7 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 			),
 
 			array(
-				'desc' 		=> __( 'Unit Price', 'woocommerce-germanized' ),
+				'desc' 		=> __( 'Base Price', 'woocommerce-germanized' ),
 				'id' 		=> 'woocommerce_gzd_display_product_detail_unit_price',
 				'type' 		=> 'checkbox',
 				'default'	=> 'yes',
@@ -598,6 +631,25 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 				'type' 		=> 'checkbox',
 				'default'	=> 'yes',
 				'checkboxgroup'		=> 'end',
+			),
+
+			array(
+				'title' 	=> __( 'Show product units', 'woocommerce-germanized' ),
+				'desc' 		=> __( 'Display amount of product units on product detail page.', 'woocommerce-germanized' ),
+				'desc_tip'	=> __( 'Product units will be shown right above your SKU (if available) within the product meta section.', 'woocommerce-germanized' ),
+				'id' 		=> 'woocommerce_gzd_display_product_units',
+				'type' 		=> 'checkbox',
+				'default'	=> 'no',
+			),
+
+			array(
+				'title' 	=> __( 'Product Units Text', 'woocommerce-germanized' ),
+				'desc' 		=> __( 'This text will be used to display the product units. Use {product_units} to insert the amount of product units. Use {unit} to insert the unit. Optionally display the formatted unit price with {unit_price}.', 'woocommerce-germanized' ),
+				'desc_tip'	=> true,
+				'id' 		=> 'woocommerce_gzd_product_units_text',
+				'type' 		=> 'text',
+				'css' 		=> 'min-width:300px;',
+				'default'	=> __( 'Product contains: {product_units} {unit}', 'woocommerce-germanized' ),
 			),
 
 			array(
@@ -733,6 +785,16 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 				'css' 		=> 'width:100%; height: 65px;',
 				'id' 		=> 'woocommerce_gzd_checkout_legal_text_digital',
 				'type' 		=> 'textarea',
+			),
+
+			array(
+				'title' 	=> __( 'Digital Confirmation Notice', 'woocommerce-germanized' ),
+				'desc' 		=> __( 'This text will be appended to your order processing email if the order contains digital products. Use placeholders {link}{/link} to insert link to right of withdrawal page.', 'woocommerce-germanized' ),
+				'desc_tip'	=> true,
+				'id' 		=> 'woocommerce_gzd_order_confirmation_legal_digital_notice',
+				'default'	=> __( 'Furthermore you have expressly agreed to start the performance of the contract for digital items (e.g. downloads) before expiry of the withdrawal period. I have noted to lose my {link}right of withdrawal{/link} with the beginning of the performance of the contract.', 'woocommerce-germanized' ),
+				'type' 		=> 'textarea',
+				'css' 		=> 'width:100%; height: 65px;',
 			),
 
 			array(

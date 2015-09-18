@@ -34,6 +34,7 @@ class WC_GZD_Product {
 			'unit' 				 => '',
 			'unit_price' 		 => '',
 			'unit_base' 		 => '',
+			'unit_product'		 => '',
 			'unit_price_regular' => '',
 			'unit_price_sale' 	 => '',
 			'mini_desc' 		 => '',
@@ -96,7 +97,7 @@ class WC_GZD_Product {
 	 */
 	public function get_mini_desc() {
 		if ( $this->mini_desc && ! empty( $this->mini_desc ) )
-			return apply_filters( 'the_content', htmlspecialchars_decode( $this->mini_desc ) );
+			return wpautop( htmlspecialchars_decode( $this->mini_desc ) );
 		return false;
 	}
 
@@ -231,11 +232,50 @@ class WC_GZD_Product {
 	 * @return string 
 	 */
 	public function get_unit_html( $show_sale = true ) {
+		
 		$display_price         = $this->get_unit_price();
 		$display_regular_price = $this->get_unit_price( 1, $this->get_unit_regular_price() );
 		$display_sale_price    = $this->get_unit_price( 1, $this->get_unit_sale_price() );
 		$price_html 		   = ( ( $this->is_on_unit_sale() && $show_sale ) ? $this->get_price_html_from_to( $display_regular_price, $display_sale_price ) : wc_price( $display_price ) );
-		return ( $this->has_unit() ) ? str_replace( '{price}', $price_html . apply_filters( 'wc_gzd_unit_price_seperator', ' / ' ) . $this->get_unit_base(), get_option( 'woocommerce_gzd_unit_price_text' ) ) : '';
+		$html 				   = '';
+		$text 				   = get_option( 'woocommerce_gzd_unit_price_text' );
+
+		if ( $this->has_unit() ) {
+
+			if ( strpos( $text, '{price}' ) !== false ) {
+
+				$html = str_replace( '{price}', $price_html . apply_filters( 'wc_gzd_unit_price_seperator', ' / ' ) . $this->get_unit_base(), $text );
+
+			} else {
+
+				$html = str_replace( array( '{base_price}', '{unit}', '{base}' ), array( $price_html, '<span class="unit">' . $this->get_unit() . '</span>', ( $this->unit_base > apply_filters( 'wc_gzd_unit_base_min_amount_to_show', 1 ) ? '<span class="unit-base">' . $this->unit_base . '</span>' : '' ) ), $text );
+
+			}
+
+		}
+
+		return apply_filters( 'woocommerce_gzd_unit_price_html', $html, $this );
+	}
+
+	public function has_product_units() {
+		return ( $this->unit_product && ! empty( $this->unit_product ) && $this->get_unit() );
+	}
+
+	/**
+	 * Formats the amount of product units
+	 *  
+	 * @return string 
+	 */
+	public function get_product_units_html() {
+
+		$html = '';
+		$text = get_option( 'woocommerce_gzd_product_units_text' );
+
+		if ( $this->has_product_units() )
+			$html = str_replace( array( '{product_units}', '{unit}', '{unit_price}' ), array( $this->unit_product, $this->get_unit(), $this->get_unit_html() ), $text );
+
+		return apply_filters( 'woocommerce_gzd_product_units_html', $html, $this );
+
 	}
 
 	/**
