@@ -107,7 +107,7 @@ class WC_GZD_Product {
 	 * @return boolean
 	 */
 	public function is_virtual_vat_exception() {
-		return ( ( get_option( 'woocommerce_gzd_enable_virtual_vat' ) == 'yes' ) && ( $this->is_downloadable() || $this->is_virtual() ) ? true : false );
+		return apply_filters( 'woocommerce_gzd_product_virtual_vat_exception', ( ( get_option( 'woocommerce_gzd_enable_virtual_vat' ) == 'yes' ) && ( $this->is_downloadable() || $this->is_virtual() ) ? true : false ), $this );
 	}
 
 	/**
@@ -284,7 +284,13 @@ class WC_GZD_Product {
 	 * @return bool|object false returns false if term does not exist otherwise returns term object
 	 */
 	public function get_delivery_time() {
-		$terms = wp_get_post_terms( ( $this->is_variation() ? $this->variation_id : $this->id ), 'product_delivery_time' );
+		$terms = wp_get_post_terms( $this->id, 'product_delivery_time' );
+		// Check for variation
+		if ( $this->is_variation() ) {
+			$variation_terms = wp_get_post_terms( $this->variation_id , 'product_delivery_time' );
+			if ( ! empty( $variation_terms ) && ! is_wp_error( $variation_terms ) )
+				$terms = $variation_terms;
+		}
 		if ( is_wp_error( $terms ) || empty( $terms ) )
 			return false;
 		return $terms[ 0 ];
