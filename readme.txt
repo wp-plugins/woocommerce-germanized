@@ -43,7 +43,7 @@ Zudem haben wir einige Anpassungen am Bezahlvorgang vorgenommen, damit dein WooC
 = Trusted Shops vorzertifiziert =
 WC Germanized wurde von Trusted Shops vorzertifiziert und bietet damit die optimalen technischen Voraussetzungen für einen rechtssicheren Online-Shop mit WooCommerce in Deutschland.
 Trusted Shops zertifiziert Online-Shops nach sorgfältig ausgewählten Qualitätskriterien und hat das WooCommerce Plugin genau unter die Lupe genommen.
-Selbstverständlich können Trusted Shops Kunden mit nur wenigen Einstellungen das Gütesiegel und die Trusted Shops Produkte mit WC Germanized nutzen.
+Selbstverständlich können Trusted Shops Kunden mit nur wenigen Einstellungen das Gütesiegel und die Trusted Shops Produkte mit WooCommerce Germanized nutzen.
 
 = Sauber implementiert =
 Bei der Entwicklung von WC Germanized haben wir besonderes Augenmerk auf die nahtlose Integration in WooCommerce gelegt.
