@@ -16,7 +16,8 @@ class WC_GZD_Install {
 	/** @var array DB updates that need to be run */
 	private static $db_updates = array(
 		'1.0.4' => 'updates/woocommerce-gzd-update-1.0.4.php',
-		'1.4.2' => 'updates/woocommerce-gzd-update-1.4.2.php'
+		'1.4.2' => 'updates/woocommerce-gzd-update-1.4.2.php',
+		'1.4.6' => 'updates/woocommerce-gzd-update-1.4.6.php'
 	);
 
 	/**
@@ -143,6 +144,20 @@ class WC_GZD_Install {
 		// Queue upgrades
 		$current_version    = get_option( 'woocommerce_gzd_version', null );
 		$current_db_version = get_option( 'woocommerce_gzd_db_version', null );
+
+		// Queue messages and notices
+		if ( ! is_null( $current_version ) ) {
+			
+			$major_version = substr( $current_version, 0, 3 );
+			$new_major_version = substr( WC_germanized()->version, 0, 3 );
+
+			// Only on major update
+			if ( version_compare( $new_major_version, $major_version, ">" ) ) {
+				delete_option( '_wc_gzd_hide_theme_notice' );
+				delete_option( '_wc_gzd_hide_pro_notice' );
+			}
+
+		}
 		
 		if ( ! is_null( $current_db_version ) && version_compare( $current_db_version, max( array_keys( self::$db_updates ) ), '<' ) ) {
 			// Update
@@ -157,9 +172,7 @@ class WC_GZD_Install {
 		update_option( 'woocommerce_gzd_activation_date', date( 'Y-m-d' ) );
 
 		// Add theme compatibility check
-		delete_option( '_wc_gzd_hide_theme_notice' );
 		delete_option( '_wc_gzd_hide_review_notice' );
-		delete_option( '_wc_gzd_hide_pro_notice' );
 
 		// Check if pages are needed
 		if ( wc_get_page_id( 'revocation' ) < 1 ) {

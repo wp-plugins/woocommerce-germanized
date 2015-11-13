@@ -295,6 +295,16 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 			),
 
 			array(
+				'title' 	=> __( 'Free Shipping Text', 'woocommerce-germanized' ),
+				'desc' 		=> __( 'This text will be used to inform the customer about free shipping. Leave empty to disable notice. Use {link}{/link} to insert link to shipping costs page.', 'woocommerce-germanized' ),
+				'desc_tip'	=> true,
+				'id' 		=> 'woocommerce_gzd_free_shipping_text',
+				'type' 		=> 'text',
+				'css' 		=> 'min-width:300px;',
+				'default'	=> __( '', 'woocommerce-germanized' ),
+			),
+
+			array(
 				'title' 	=> __( 'Shipping Costs Tax', 'woocommerce-germanized' ),
 				'desc' 		=> __( 'Enable better taxation for shpping costs?', 'woocommerce-germanized' ),
 				'id' 		=> 'woocommerce_gzd_shipping_tax',
@@ -806,7 +816,7 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 				'title' 	=> __( 'Legal Digital Text', 'woocommerce-germanized' ),
 				'desc' 		=> __( 'Choose a Plain Text which will be shown right above checkout submit button if a user has picked a digital product. See legal text option for possible placeholders.', 'woocommerce-germanized' ),
 				'desc_tip'	=> true,
-				'default'   =>  __( 'I want immediate access to the digital content and I acknowledge that thereby I lose my right to cancel once the service has begun.', 'woocommerce-germanized' ),
+				'default'   =>  __( 'For digital products: I strongly agree that the execution of the agreement starts before the revocation period has expired. I am aware that my right of withdrawal ceases with the beginning of the agreement.', 'woocommerce-germanized' ),
 				'css' 		=> 'width:100%; height: 65px;',
 				'id' 		=> 'woocommerce_gzd_checkout_legal_text_digital',
 				'type' 		=> 'textarea',
@@ -952,6 +962,11 @@ class WC_GZD_Settings_Germanized extends WC_Settings_Page {
 				update_option( 'woocommerce_gzd_enable_virtual_vat', 'no' );
 				WC_Admin_Settings::add_error( __( 'Sorry, but the new Virtual VAT rules cannot be applied to small business.', 'woocommerce-germanized' ) );
 			}
+		}
+		if ( 'yes' === get_option( 'woocommerce_gzd_enable_virtual_vat' ) ) {
+			// Make sure that tax based location is set to billing address
+			if ( 'base' === get_option( 'woocommerce_tax_based_on' ) )
+				update_option( 'woocommerce_tax_based_on', 'billing' );
 		}
 	}
 

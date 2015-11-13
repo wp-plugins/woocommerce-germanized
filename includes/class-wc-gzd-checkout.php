@@ -146,7 +146,7 @@ class WC_GZD_Checkout {
 				'type' 	   => 'select',
 				'required' => 1,
 				'label'    => __( 'Title', 'woocommerce-germanized' ),
-				'options'  => array( 1 => __( 'Sir', 'woocommerce-germanized' ), 2 => __( 'Madam', 'woocommerce-germanized' ) ),
+				'options'  => apply_filters( 'woocommerce_gzd_title_options', array( 1 => __( 'Sir', 'woocommerce-germanized' ), 2 => __( 'Madam', 'woocommerce-germanized' ) ) ),
 				'before'   => 'first_name',
 				'group'    => array( 'billing', 'shipping' ),
 			);
@@ -276,7 +276,7 @@ class WC_GZD_Checkout {
 	}
 
 	public function get_customer_title( $option = 1 ) {
-		return ( isset( $this->custom_fields[ 'title' ][ 'options' ][ $option ] ) ? $this->custom_fields[ 'title' ][ 'options' ][ $option ] : false );
+		return ( 1 == $option ? __( 'Sir', 'woocommerce-germanized' ) : __( 'Madam', 'woocommerce-germanized' ) );
 	}
 
 	public function set_formatted_address( $placeholder, $args ) {

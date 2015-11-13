@@ -57,11 +57,17 @@ class WC_Germanized_Meta_Box_Product_Data {
 		$delivery_time = $_product->gzd_product->delivery_time;
 
 		?>	
+
 		<p class="form-field">
 			<label for="delivery_time"><?php _e( 'Delivery Time', 'woocommerce-germanized' ); ?></label>
 			<input type="hidden" class="wc-product-search wc-gzd-delivery-time-search" style="width: 50%" id="delivery_time" name="delivery_time" data-minimum_input_length="1" data-allow_clear="true" data-placeholder="<?php _e( 'Search for a delivery time&hellip;', 'woocommerce-germanized' ); ?>" data-action="woocommerce_gzd_json_search_delivery_time" data-multiple="false" data-selected="<?php echo ( $delivery_time ? $delivery_time->name : '' ); ?>" value="<?php echo ( $delivery_time ? $delivery_time->term_id : '' ); ?>" />
 		</p>
+		
 		<?php
+
+		// Free shipping
+		woocommerce_wp_checkbox( array( 'id' => '_free_shipping', 'label' => __( 'Free shipping?', 'woocommerce-germanized' ), 'description' => __( 'This option disables the "plus shipping costs" notice on product page', 'woocommerce-germanized' ) ) );
+
 	}
 
 	public static function save( $post_id ) {
@@ -85,6 +91,7 @@ class WC_Germanized_Meta_Box_Product_Data {
 			'_sale_price_dates_from' => '',
 			'_sale_price_dates_to' => '',
 			'_sale_price' => '',
+			'_free_shipping' => '',
 		);
 
 		foreach ( $data as $k => $v ) {
@@ -99,7 +106,7 @@ class WC_Germanized_Meta_Box_Product_Data {
 
 		$data = apply_filters( 'woocommerce_gzd_product_saveable_data', $data, $post_id );
 
-		$product_type    = empty( $data['product-type'] ) ? 'simple' : sanitize_title( stripslashes( $data['product-type'] ) );
+		$product_type    = ( ! isset( $data['product-type'] ) || empty( $data['product-type'] ) ) ? 'simple' : sanitize_title( stripslashes( $data['product-type'] ) );
 		
 		if ( isset( $data['_unit'] ) ) {
 			update_post_meta( $post_id, '_unit', ( $data['_unit'] === '' ? '' : sanitize_text_field( $data['_unit'] ) ) );
@@ -132,13 +139,18 @@ class WC_Germanized_Meta_Box_Product_Data {
 		if ( isset( $data[ '_mini_desc' ] ) ) {
 			update_post_meta( $post_id, '_mini_desc', ( $data[ '_mini_desc' ] === '' ? '' : esc_html( $data[ '_mini_desc' ] ) ) );
 		}
-		
-		if ( isset( $data[ 'delivery_time' ] ) && ! is_numeric( $data[ 'delivery_time' ] ) )
-			wp_set_post_terms( $post_id, sanitize_text_field( $data[ 'delivery_time' ] ), 'product_delivery_time' );
-		else if ( is_numeric( $data[ 'delivery_time' ] ) )
-			wp_set_object_terms( $post_id, absint( $data[ 'delivery_time' ] ) , 'product_delivery_time' );
-		else
+
+		if ( isset( $data[ 'delivery_time' ] ) && ! empty( $data[ 'delivery_time' ] ) ) {
+			if ( ! is_numeric( $data[ 'delivery_time' ] ) )
+				wp_set_post_terms( $post_id, sanitize_text_field( $data[ 'delivery_time' ] ), 'product_delivery_time' );
+			else
+				wp_set_object_terms( $post_id, absint( $data[ 'delivery_time' ] ) , 'product_delivery_time' );
+		} else {
 			wp_delete_object_term_relationships( $post_id, 'product_delivery_time' );
+		}
+
+		// Free shipping
+		update_post_meta( $post_id, '_free_shipping', ( isset( $data['_free_shipping'] ) ) ? 'yes' : '' );
 
 		// Ignore variable data
 		if ( in_array( $product_type, array( 'variable', 'grouped' ) ) && ! $is_variation ) {
